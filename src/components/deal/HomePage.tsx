@@ -236,8 +236,12 @@ function ServiceCard({ service, language, onSelect, onContact }: {
   function getServiceEmoji(categoryName?: string): string {
     if (!categoryName) return '🛠️'
     const map: Record<string, string> = {
-      'سباكة': '🔧', 'كهرباء': '⚡', 'تكييف': '❄️', 'نجارة': '🪚', 'دهان': '🎨', 'نقل': '🚚', 'تنظيف': '🧹',
-      'Plomberie': '🔧', 'Électricité': '⚡', 'Climatisation': '❄️', 'Menuiserie': '🪚', 'Peinture': '🎨', 'Transport': '🚚', 'Nettoyage': '🧹',
+      'سباكة': '🔧', 'كهرباء': '⚡', 'تكييف': '❄️', 'نجارة': '🪚', 'دهان': '🎨', 'نقل': '🚚', 'تنظيف': '🧹', 'صيانة سيارات': '🚗',
+      'حلاقة وتجميل': '💇', 'طبخ وتموين': '🍳', 'خياطة وتطريز': '🧵', 'تعليم ودروس خصوصية': '📖', 'حدادة وألمنيوم': '⚙️', 'زراعة وحدائق': '🌱', 'تصوير فوتوغرافي': '📸', 'صيانة أجهزة إلكترونية': '🛠️', 'محاسبة وضرائب': '📊', 'تصميم وطباعة': '🖨️', 'خدمات منزلية': '🏡', 'عطارة وطب شعبي': '🫖',
+      'نقل وشحن': '🚚',
+      'Plomberie': '🔧', 'Électricité': '⚡', 'Climatisation': '❄️', 'Menuiserie': '🪚', 'Peinture': '🎨', 'Transport': '🚚', 'Nettoyage': '🧹', 'Entretien auto': '🚗',
+      'Coiffure et beauté': '💇', 'Cuisine et traiteur': '🍳', 'Couture et broderie': '🧵', 'Enseignement et cours': '📖', 'Ferronnerie et aluminium': '⚙️', 'Jardinage et paysagisme': '🌱', 'Photographie': '📸', 'Réparation électronique': '🛠️', 'Comptabilité et fiscalité': '📊', 'Design et impression': '🖨️', 'Services à domicile': '🏡', 'Herboristerie et médecine traditionnelle': '🫖',
+      'Transport et expédition': '🚚',
     }
     return map[categoryName] || '🛠️'
   }

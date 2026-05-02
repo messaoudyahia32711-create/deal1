@@ -31,25 +31,49 @@ async function main() {
   console.log('📂 Creating categories...')
 
   const productCategoriesData = [
-    { nameAr: 'إلكترونيات', nameFr: 'Électronique', icon: 'monitor', type: 'product' },
-    { nameAr: 'ملابس', nameFr: 'Vêtements', icon: 'shirt', type: 'product' },
-    { nameAr: 'أجهزة منزلية', nameFr: 'Électroménager', icon: 'home', type: 'product' },
-    { nameAr: 'مواد غذائية', nameFr: 'Alimentation', icon: 'shopping-cart', type: 'product' },
-    { nameAr: 'مستحضرات تجميل', nameFr: 'Cosmétiques', icon: 'sparkles', type: 'product' },
-    { nameAr: 'أثاث', nameFr: 'Meubles', icon: 'armchair', type: 'product' },
-    { nameAr: 'هواتف', nameFr: 'Téléphones', icon: 'smartphone', type: 'product' },
-    { nameAr: 'حواسيب', nameFr: 'Informatique', icon: 'laptop', type: 'product' },
+    { nameAr: 'إلكترونيات', nameFr: 'Électronique', icon: '📺', type: 'product' },
+    { nameAr: 'ملابس', nameFr: 'Vêtements', icon: '👔', type: 'product' },
+    { nameAr: 'أجهزة منزلية', nameFr: 'Électroménager', icon: '🏠', type: 'product' },
+    { nameAr: 'مواد غذائية', nameFr: 'Alimentation', icon: '🛒', type: 'product' },
+    { nameAr: 'مستحضرات تجميل', nameFr: 'Cosmétiques', icon: '✨', type: 'product' },
+    { nameAr: 'أثاث', nameFr: 'Meubles', icon: '🪑', type: 'product' },
+    { nameAr: 'هواتف', nameFr: 'Téléphones', icon: '📱', type: 'product' },
+    { nameAr: 'حواسيب', nameFr: 'Informatique', icon: '💻', type: 'product' },
+    { nameAr: 'حرف يدوية', nameFr: 'Artisanat', icon: '🧶', type: 'product' },
+    { nameAr: 'مجوهرات وإكسسوارات', nameFr: 'Bijoux et accessoires', icon: '💍', type: 'product' },
+    { nameAr: 'سجاد وزرابي', nameFr: 'Tapis et Zrabia', icon: '🧵', type: 'product' },
+    { nameAr: 'فخار وخزف', nameFr: 'Poterie et céramique', icon: '🏺', type: 'product' },
+    { nameAr: 'جلد طبيعي', nameFr: 'Cuir naturel', icon: '🥿', type: 'product' },
+    { nameAr: 'زي تقليدي جزائري', nameFr: 'Tenue traditionnelle', icon: '👗', type: 'product' },
+    { nameAr: 'أعشاب وتوابل', nameFr: 'Herbes et épices', icon: '🌿', type: 'product' },
+    { nameAr: 'منتجات نحلية', nameFr: 'Produits apicoles', icon: '🍯', type: 'product' },
+    { nameAr: 'كتب ومخطوطات', nameFr: 'Livres et manuscrits', icon: '📚', type: 'product' },
+    { nameAr: 'أدوات ومعدات', nameFr: 'Outils et équipements', icon: '🔧', type: 'product' },
+    { nameAr: 'مستلزمات أطفال', nameFr: 'Articles pour bébé', icon: '👶', type: 'product' },
+    { nameAr: 'رياضة ولياقة', nameFr: 'Sport et fitness', icon: '⚽', type: 'product' },
   ]
 
   const serviceCategoriesData = [
-    { nameAr: 'سباكة', nameFr: 'Plomberie', icon: 'wrench', type: 'service' },
-    { nameAr: 'كهرباء', nameFr: 'Électricité', icon: 'zap', type: 'service' },
-    { nameAr: 'تكييف', nameFr: 'Climatisation', icon: 'wind', type: 'service' },
-    { nameAr: 'نجارة', nameFr: 'Menuiserie', icon: 'hammer', type: 'service' },
-    { nameAr: 'دهان', nameFr: 'Peinture', icon: 'paintbrush', type: 'service' },
-    { nameAr: 'نقل', nameFr: 'Transport', icon: 'truck', type: 'service' },
-    { nameAr: 'تنظيف', nameFr: 'Nettoyage', icon: 'spray-can', type: 'service' },
-    { nameAr: 'صيانة سيارات', nameFr: 'Entretien auto', icon: 'car', type: 'service' },
+    { nameAr: 'سباكة', nameFr: 'Plomberie', icon: '🔧', type: 'service' },
+    { nameAr: 'كهرباء', nameFr: 'Électricité', icon: '⚡', type: 'service' },
+    { nameAr: 'تكييف', nameFr: 'Climatisation', icon: '❄️', type: 'service' },
+    { nameAr: 'نجارة', nameFr: 'Menuiserie', icon: '🪚', type: 'service' },
+    { nameAr: 'دهان', nameFr: 'Peinture', icon: '🎨', type: 'service' },
+    { nameAr: 'نقل وشحن', nameFr: 'Transport et expédition', icon: '🚚', type: 'service' },
+    { nameAr: 'تنظيف', nameFr: 'Nettoyage', icon: '🧹', type: 'service' },
+    { nameAr: 'صيانة سيارات', nameFr: 'Entretien auto', icon: '🚗', type: 'service' },
+    { nameAr: 'حلاقة وتجميل', nameFr: 'Coiffure et beauté', icon: '💇', type: 'service' },
+    { nameAr: 'طبخ وتموين', nameFr: 'Cuisine et traiteur', icon: '🍳', type: 'service' },
+    { nameAr: 'خياطة وتطريز', nameFr: 'Couture et broderie', icon: '🧵', type: 'service' },
+    { nameAr: 'تعليم ودروس خصوصية', nameFr: 'Enseignement et cours', icon: '📖', type: 'service' },
+    { nameAr: 'حدادة وألمنيوم', nameFr: 'Ferronnerie et aluminium', icon: '⚙️', type: 'service' },
+    { nameAr: 'زراعة وحدائق', nameFr: 'Jardinage et paysagisme', icon: '🌱', type: 'service' },
+    { nameAr: 'تصوير فوتوغرافي', nameFr: 'Photographie', icon: '📸', type: 'service' },
+    { nameAr: 'صيانة أجهزة إلكترونية', nameFr: 'Réparation électronique', icon: '🛠️', type: 'service' },
+    { nameAr: 'محاسبة وضرائب', nameFr: 'Comptabilité et fiscalité', icon: '📊', type: 'service' },
+    { nameAr: 'تصميم وطباعة', nameFr: 'Design et impression', icon: '🖨️', type: 'service' },
+    { nameAr: 'خدمات منزلية', nameFr: 'Services à domicile', icon: '🏡', type: 'service' },
+    { nameAr: 'عطارة وطب شعبي', nameFr: 'Herboristerie et médecine traditionnelle', icon: '🫖', type: 'service' },
   ]
 
   const categories = await prisma.$transaction([
@@ -57,10 +81,12 @@ async function main() {
     ...serviceCategoriesData.map(data => prisma.category.create({ data })),
   ])
 
-  const productCategories = categories.slice(0, 8)
-  const serviceCategories = categories.slice(8, 16)
+  const productCategories = categories.slice(0, 20)
+  const serviceCategories = categories.slice(20, 40)
 
   console.log(`  ✅ Created ${categories.length} categories (${productCategories.length} product, ${serviceCategories.length} service)`)
+  console.log(`     📦 Product categories: 8 original + 12 new Algerian artisanal categories`)
+  console.log(`     🔧 Service categories: 8 original + 12 new Algerian traditional service categories`)
 
   // ─── 2. USERS ───────────────────────────────────────────────────────────────
   console.log('👥 Creating users...')

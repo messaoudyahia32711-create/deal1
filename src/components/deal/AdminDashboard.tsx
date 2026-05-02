@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAppStore } from '@/lib/store'
 import { t, formatPrice } from '@/lib/i18n'
 import MessagePanel from '@/components/deal/MessagePanel'
-import { Users, DollarSign, Package, AlertTriangle, TrendingUp, Shield, Settings, Download, Eye, Ban, CheckCircle, Search, FileText, Bell } from 'lucide-react'
+import { Users, DollarSign, Package, AlertTriangle, TrendingUp, Shield, Settings, Download, Eye, Ban, CheckCircle, Search, FileText, Bell, Plus, Pencil, Trash2, X, FolderOpen } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,9 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
 
 interface Stats {
   totalUsers: number
@@ -41,6 +44,10 @@ interface CategoryItem {
   nameFr?: string
   type: string
   icon?: string
+  _count?: {
+    products: number
+    services: number
+  }
 }
 
 interface ComplaintItem {
@@ -68,6 +75,7 @@ const priorityLabels: Record<string, { ar: string; fr: string; cls: string }> = 
 
 export default function AdminDashboard() {
   const { adminTab, setAdminTab, user, language } = useAppStore()
+  const { toast } = useToast()
   const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<UserItem[]>([])
   const [categories, setCategories] = useState<CategoryItem[]>([])
@@ -77,6 +85,15 @@ export default function AdminDashboard() {
   const [filterRole, setFilterRole] = useState('all')
   const [maintenanceMode, setMaintenanceMode] = useState(false)
   const isArabic = language === 'ar'
+
+  // Category management state
+  const [catDialogOpen, setCatDialogOpen] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<CategoryItem | null>(null)
+  const [catForm, setCatForm] = useState({ nameAr: '', nameFr: '', icon: '📁', type: 'product' })
+  const [catFilterType, setCatFilterType] = useState<'all' | 'product' | 'service'>('all')
+  const [catSearch, setCatSearch] = useState('')
+  const [catSubmitting, setCatSubmitting] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -103,6 +120,84 @@ export default function AdminDashboard() {
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
+
+  // Category CRUD functions
+  function openAddCategoryDialog() {
+    setEditingCategory(null)
+    setCatForm({ nameAr: '', nameFr: '', icon: '📁', type: 'product' })
+    setCatDialogOpen(true)
+  }
+
+  function openEditCategoryDialog(cat: CategoryItem) {
+    setEditingCategory(cat)
+    setCatForm({ nameAr: cat.nameAr, nameFr: cat.nameFr || '', icon: cat.icon || '📁', type: cat.type })
+    setCatDialogOpen(true)
+  }
+
+  async function handleCategorySubmit() {
+    if (!catForm.nameAr.trim()) {
+      toast({ title: isArabic ? 'خطأ' : 'Erreur', description: isArabic ? 'اسم الصنف بالعربية مطلوب' : 'Le nom arabe est requis', variant: 'destructive' })
+      return
+    }
+    setCatSubmitting(true)
+    try {
+      if (editingCategory) {
+        // Update
+        const res = await fetch(`/api/categories/${editingCategory.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(catForm),
+        })
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Error')
+        }
+        toast({ title: isArabic ? 'تم التحديث' : 'Mis à jour', description: isArabic ? 'تم تحديث الصنف بنجاح' : 'Catégorie mise à jour avec succès' })
+      } else {
+        // Create
+        const res = await fetch('/api/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(catForm),
+        })
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data.error || 'Error')
+        }
+        toast({ title: isArabic ? 'تمت الإضافة' : 'Ajoutée', description: isArabic ? 'تم إضافة الصنف بنجاح' : 'Catégorie ajoutée avec succès' })
+      }
+      setCatDialogOpen(false)
+      loadData()
+    } catch (e: any) {
+      toast({ title: isArabic ? 'خطأ' : 'Erreur', description: e.message || (isArabic ? 'حدث خطأ' : 'Une erreur est survenue'), variant: 'destructive' })
+    }
+    setCatSubmitting(false)
+  }
+
+  async function handleDeleteCategory(id: string) {
+    try {
+      const res = await fetch(`/api/categories/${id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Error')
+      }
+      toast({ title: isArabic ? 'تم الحذف' : 'Supprimée', description: isArabic ? 'تم حذف الصنف بنجاح' : 'Catégorie supprimée avec succès' })
+      setDeleteConfirmId(null)
+      loadData()
+    } catch (e: any) {
+      toast({ title: isArabic ? 'خطأ' : 'Erreur', description: e.message || (isArabic ? 'لا يمكن حذف هذا الصنف' : 'Impossible de supprimer cette catégorie'), variant: 'destructive' })
+      setDeleteConfirmId(null)
+    }
+  }
+
+  const filteredCategories = categories.filter(c => {
+    const matchType = catFilterType === 'all' || c.type === catFilterType
+    const matchSearch = !catSearch || c.nameAr.includes(catSearch) || (c.nameFr && c.nameFr.toLowerCase().includes(catSearch.toLowerCase()))
+    return matchType && matchSearch
+  })
+
+  const productCatCount = categories.filter(c => c.type === 'product').length
+  const serviceCatCount = categories.filter(c => c.type === 'service').length
 
   async function toggleUserVerification(userId: string, isVerified: boolean) {
     try {
@@ -296,25 +391,185 @@ export default function AdminDashboard() {
 
           {/* Categories */}
           <TabsContent value="categories">
-            <h2 className="text-lg font-black mb-4">{t('categories', language)} ({categories.length})</h2>
-            <div className="grid gap-2">
-              {categories.map(cat => (
-                <Card key={cat.id} className="shadow-sm">
+            {/* Stats Row */}
+            <div className="grid grid-cols-3 gap-3 mb-4">
+              <Card className="bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-200">
+                <CardContent className="p-3 text-center">
+                  <div className="text-2xl font-black text-yellow-700">{categories.length}</div>
+                  <div className="text-xs text-yellow-600 font-bold">{isArabic ? 'إجمالي الأصناف' : 'Total catégories'}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-2 border-purple-200">
+                <CardContent className="p-3 text-center">
+                  <div className="text-2xl font-black text-purple-700">{productCatCount}</div>
+                  <div className="text-xs text-purple-600 font-bold">{isArabic ? 'أصناف المنتجات' : 'Catégories produits'}</div>
+                </CardContent>
+              </Card>
+              <Card className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200">
+                <CardContent className="p-3 text-center">
+                  <div className="text-2xl font-black text-blue-700">{serviceCatCount}</div>
+                  <div className="text-xs text-blue-600 font-bold">{isArabic ? 'أصناف الخدمات' : 'Catégories services'}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Toolbar */}
+            <div className="flex flex-wrap gap-3 mb-4 items-center">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input value={catSearch} onChange={e => setCatSearch(e.target.value)} placeholder={isArabic ? 'بحث في الأصناف...' : 'Rechercher catégories...'} className="pr-9 rounded-xl" />
+              </div>
+              <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+                <button onClick={() => setCatFilterType('all')} className={`px-3 py-1.5 rounded-lg font-bold text-sm transition ${catFilterType === 'all' ? 'bg-yellow-500 text-white shadow-md' : 'hover:bg-gray-200'}`}>
+                  {t('all', language)}
+                </button>
+                <button onClick={() => setCatFilterType('product')} className={`px-3 py-1.5 rounded-lg font-bold text-sm transition ${catFilterType === 'product' ? 'bg-yellow-500 text-white shadow-md' : 'hover:bg-gray-200'}`}>
+                  📦 {isArabic ? 'منتجات' : 'Produits'}
+                </button>
+                <button onClick={() => setCatFilterType('service')} className={`px-3 py-1.5 rounded-lg font-bold text-sm transition ${catFilterType === 'service' ? 'bg-purple-500 text-white shadow-md' : 'hover:bg-gray-200'}`}>
+                  🔧 {isArabic ? 'خدمات' : 'Services'}
+                </button>
+              </div>
+              <Button onClick={openAddCategoryDialog} className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-bold rounded-xl shadow-md">
+                <Plus className="w-4 h-4 ml-1" />
+                {isArabic ? 'إضافة صنف جديد' : 'Ajouter catégorie'}
+              </Button>
+            </div>
+
+            {/* Categories List */}
+            <div className="grid gap-2 max-h-[60vh] overflow-y-auto">
+              {filteredCategories.map(cat => (
+                <Card key={cat.id} className="shadow-sm hover:shadow-md transition">
                   <CardContent className="p-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{cat.icon || '📁'}</span>
                       <div>
                         <div className="font-bold">{isArabic ? cat.nameAr : (cat.nameFr || cat.nameAr)}</div>
-                        <div className="text-xs text-gray-400">{cat.nameFr} • {cat.type === 'product' ? (isArabic ? 'منتجات' : 'Produits') : (isArabic ? 'خدمات' : 'Services')}</div>
+                        <div className="flex items-center gap-2 text-xs text-gray-400">
+                          <span>{cat.nameFr}</span>
+                          <span>•</span>
+                          <Badge className={`text-[10px] px-1.5 py-0 ${cat.type === 'product' ? 'bg-yellow-100 text-yellow-700' : 'bg-purple-100 text-purple-700'}`}>
+                            {cat.type === 'product' ? (isArabic ? 'منتجات' : 'Produit') : (isArabic ? 'خدمات' : 'Service')}
+                          </Badge>
+                          {(cat._count?.products || cat._count?.services) ? (
+                            <span className="text-gray-500">
+                              ({cat._count?.products || 0} {isArabic ? 'منتج' : 'prod'} {cat._count?.services ? `• ${cat._count.services} ${isArabic ? 'خدمة' : 'serv'}` : ''})
+                            </span>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <Button size="sm" variant="ghost"><FileText className="w-4 h-4" /></Button>
+                      <Button size="sm" variant="ghost" onClick={() => openEditCategoryDialog(cat)} className="text-blue-500 hover:text-blue-700 hover:bg-blue-50" title={isArabic ? 'تعديل' : 'Modifier'}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      {deleteConfirmId === cat.id ? (
+                        <div className="flex gap-1 items-center">
+                          <Button size="sm" variant="ghost" onClick={() => handleDeleteCategory(cat.id)} className="text-red-600 hover:text-red-700 hover:bg-red-50 font-bold text-xs">
+                            {isArabic ? 'تأكيد' : 'Confirmer'}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => setDeleteConfirmId(null)} className="text-gray-500 hover:text-gray-700">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button size="sm" variant="ghost" onClick={() => setDeleteConfirmId(cat.id)} className="text-red-400 hover:text-red-600 hover:bg-red-50" title={isArabic ? 'حذف' : 'Supprimer'}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
               ))}
+              {filteredCategories.length === 0 && (
+                <div className="text-center py-12 text-gray-400">
+                  <FolderOpen className="w-12 h-12 mx-auto mb-2 opacity-30" />
+                  <p>{isArabic ? 'لا توجد أصناف' : 'Aucune catégorie trouvée'}</p>
+                </div>
+              )}
             </div>
+
+            {/* Add/Edit Category Dialog */}
+            <Dialog open={catDialogOpen} onOpenChange={setCatDialogOpen}>
+              <DialogContent className="sm:max-w-md" dir={isArabic ? 'rtl' : 'ltr'}>
+                <DialogHeader>
+                  <DialogTitle className="font-black text-xl">
+                    {editingCategory
+                      ? (isArabic ? '✏️ تعديل الصنف' : '✏️ Modifier la catégorie')
+                      : (isArabic ? '➕ إضافة صنف جديد' : '➕ Ajouter une catégorie')
+                    }
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label className="font-bold">{isArabic ? 'اسم الصنف بالعربية *' : 'Nom en arabe *'}</Label>
+                    <Input
+                      value={catForm.nameAr}
+                      onChange={e => setCatForm({ ...catForm, nameAr: e.target.value })}
+                      placeholder={isArabic ? 'مثال: حرف يدوية' : 'Ex: Artisanat'}
+                      dir="rtl"
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold">{isArabic ? 'اسم الصنف بالفرنسية' : 'Nom en français'}</Label>
+                    <Input
+                      value={catForm.nameFr}
+                      onChange={e => setCatForm({ ...catForm, nameFr: e.target.value })}
+                      placeholder={isArabic ? 'مثال: Artisanat' : 'Ex: Artisanat'}
+                      dir="ltr"
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold">{isArabic ? 'الأيقونة (إيموجي)' : 'Icône (emoji)'}</Label>
+                    <Input
+                      value={catForm.icon}
+                      onChange={e => setCatForm({ ...catForm, icon: e.target.value })}
+                      placeholder="🧶"
+                      className="rounded-xl w-20 text-center text-2xl"
+                      maxLength={4}
+                    />
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {['📁', '📦', '🛒', '📺', '📱', '💻', '👔', '👗', '🏠', '🪑', '✨', '💍', '🧵', '🏺', '🥿', '🌿', '🍯', '📚', '🔧', '⚽', '👶', '🧶', '🎨', '🪚', '🚚', '🚗', '💇', '🍳', '📖', '⚙️', '🌱', '📸', '🛠️', '📊', '🖨️', '🏡', '🫖', '❄️', '⚡', '🧹'].map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          onClick={() => setCatForm({ ...catForm, icon: emoji })}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg text-lg hover:bg-gray-100 transition ${catForm.icon === emoji ? 'bg-yellow-100 ring-2 ring-yellow-400' : ''}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="font-bold">{isArabic ? 'نوع الصنف *' : 'Type de catégorie *'}</Label>
+                    <Select value={catForm.type} onValueChange={v => setCatForm({ ...catForm, type: v })}>
+                      <SelectTrigger className="rounded-xl">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="product">📦 {isArabic ? 'منتجات' : 'Produits'}</SelectItem>
+                        <SelectItem value="service">🔧 {isArabic ? 'خدمات' : 'Services'}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter className="gap-2">
+                  <DialogClose asChild>
+                    <Button variant="outline" className="rounded-xl">{isArabic ? 'إلغاء' : 'Annuler'}</Button>
+                  </DialogClose>
+                  <Button
+                    onClick={handleCategorySubmit}
+                    disabled={catSubmitting || !catForm.nameAr.trim()}
+                    className="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-bold rounded-xl"
+                  >
+                    {catSubmitting ? '...' : (editingCategory ? (isArabic ? 'حفظ التعديلات' : 'Enregistrer') : (isArabic ? 'إضافة الصنف' : 'Ajouter'))}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           {/* Complaints */}
