@@ -74,8 +74,8 @@ function ProductCard({ product, language, onSelect, onContact, onAddToCart, onFa
 
   return (
     <Card className="deal-card group cursor-pointer overflow-hidden" onClick={onSelect}>
-      {/* Very Large Image Area */}
-      <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+      {/* Large Image Area */}
+      <div className="relative aspect-[16/10] bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
         {hasImage ? (
           <img
             src={product.images[0]}
@@ -83,127 +83,127 @@ function ProductCard({ product, language, onSelect, onContact, onAddToCart, onFa
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-yellow-50 to-amber-50">
-            <Package className="w-24 h-24 text-yellow-300" />
-            <span className="text-base text-yellow-400 font-bold">{language === 'ar' ? 'لا توجد صورة' : 'Aucune image'}</span>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-yellow-50 to-amber-50">
+            <Package className="w-16 h-16 text-yellow-300" />
+            <span className="text-sm text-yellow-400 font-bold">{language === 'ar' ? 'لا توجد صورة' : 'Aucune image'}</span>
           </div>
         )}
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         {/* Top Badges */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+        <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
           {product.isNew && (
-            <Badge className="bg-red-500 text-white text-sm px-3 py-1.5 font-bold shadow-lg">{t('newBadge', language)}</Badge>
+            <Badge className="bg-red-500 text-white text-xs px-2.5 py-1 font-bold shadow-lg">{t('newBadge', language)}</Badge>
           )}
           {product.isOnSale && product.salePrice && (
-            <Badge className="bg-orange-500 text-white text-sm px-3 py-1.5 font-bold shadow-lg">-{discount}%</Badge>
+            <Badge className="bg-orange-500 text-white text-xs px-2.5 py-1 font-bold shadow-lg">-{discount}%</Badge>
           )}
           {product.isFeatured && (
-            <Badge className="bg-yellow-500 text-white text-sm px-3 py-1.5 font-bold shadow-lg">⭐ {t('featured', language)}</Badge>
+            <Badge className="bg-yellow-500 text-white text-xs px-2.5 py-1 font-bold shadow-lg">⭐ {t('featured', language)}</Badge>
           )}
         </div>
 
         {/* Favorite button */}
         <button
           onClick={onFavorite}
-          className="absolute top-4 left-4 w-11 h-11 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition z-10"
+          className="absolute top-3 left-3 w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-lg transition z-10"
         >
-          <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 transition" />
+          <Heart className="w-4.5 h-4.5 text-gray-400 hover:text-red-500 transition" />
         </button>
 
         {/* Image count indicator */}
         {product.images && product.images.length > 1 && (
-          <div className="absolute bottom-4 left-4 bg-black/60 text-white text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 z-10">
-            <Eye className="w-4 h-4" />
+          <div className="absolute bottom-3 left-3 bg-black/60 text-white text-xs px-2 py-1 rounded-lg flex items-center gap-1 z-10">
+            <Eye className="w-3 h-3" />
             {product.images.length} {language === 'ar' ? 'صور' : 'photos'}
           </div>
         )}
 
         {/* Quick Add to Cart on hover */}
-        <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
+        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-10">
           <button
             onClick={onAddToCart}
-            className="w-13 h-13 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl flex items-center justify-center shadow-xl transition"
+            className="w-11 h-11 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl flex items-center justify-center shadow-xl transition"
             title={t('addToCart', language)}
           >
-            <ShoppingCart className="w-6 h-6" />
+            <ShoppingCart className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Card Content - BIG and Detailed */}
-      <CardContent className="p-6">
+      {/* Card Content - Detailed */}
+      <CardContent className="p-5">
         {/* Category + Stock */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           {product.categoryName && (
-            <Badge variant="outline" className="text-sm border-purple-300 text-purple-600 bg-purple-50 px-3 py-1">
+            <Badge variant="outline" className="text-xs border-purple-300 text-purple-600 bg-purple-50 px-2 py-0.5">
               {product.categoryName}
             </Badge>
           )}
-          <div className={`flex items-center gap-1.5 text-sm font-bold ${
+          <div className={`flex items-center gap-1 text-xs font-bold ${
             stockStatus === 'in_stock' ? 'text-green-600' : stockStatus === 'low_stock' ? 'text-orange-500' : 'text-red-500'
           }`}>
-            {stockStatus === 'in_stock' && <CheckCircle className="w-4 h-4" />}
-            {stockStatus === 'low_stock' && <AlertTriangle className="w-4 h-4" />}
-            {stockStatus === 'out_of_stock' && <AlertTriangle className="w-4 h-4" />}
+            {stockStatus === 'in_stock' && <CheckCircle className="w-3 h-3" />}
+            {stockStatus === 'low_stock' && <AlertTriangle className="w-3 h-3" />}
+            {stockStatus === 'out_of_stock' && <AlertTriangle className="w-3 h-3" />}
             {stockStatus === 'in_stock' ? (language === 'ar' ? 'متوفر' : 'En stock') : stockStatus === 'low_stock' ? (language === 'ar' ? `متبقي ${product.stock}` : `Reste ${product.stock}`) : (language === 'ar' ? 'نفذ' : 'Épuisé')}
           </div>
         </div>
 
         {/* Title */}
-        <h3 className="font-black text-xl md:text-2xl mb-3 line-clamp-2 leading-snug min-h-[4rem]">{product.title}</h3>
+        <h3 className="font-black text-lg mb-2 line-clamp-2 leading-snug min-h-[3.2rem]">{product.title}</h3>
 
         {/* Description snippet */}
         {product.description && (
-          <p className="text-base text-gray-500 line-clamp-2 mb-4 leading-relaxed">{product.description}</p>
+          <p className="text-sm text-gray-500 line-clamp-2 mb-3 leading-relaxed">{product.description}</p>
         )}
 
         {/* Rating */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-0.5">
             {Array.from({ length: 5 }, (_, i) => (
-              <Star key={i} className={`w-5 h-5 ${i < Math.round(product.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+              <Star key={i} className={`w-4 h-4 ${i < Math.round(product.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
             ))}
           </div>
-          <span className="text-base font-bold text-gray-700">{(product.rating || 0).toFixed(1)}</span>
-          <span className="text-sm text-gray-400">({product.reviewCount || 0} {t('reviews', language)})</span>
+          <span className="text-sm font-bold text-gray-700">{(product.rating || 0).toFixed(1)}</span>
+          <span className="text-xs text-gray-400">({product.reviewCount || 0} {t('reviews', language)})</span>
         </div>
 
-        {/* Price - Very Prominent */}
-        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-2xl p-4 mb-4 border border-yellow-200">
+        {/* Price - Prominent */}
+        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl p-3 mb-3 border border-yellow-200">
           <div className="flex items-center justify-between">
             <div>
               {product.isOnSale && product.salePrice ? (
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl md:text-3xl font-black text-yellow-700">{formatPrice(product.salePrice, language)}</span>
-                  <span className="text-base text-gray-400 line-through">{formatPrice(product.price, language)}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-black text-yellow-700">{formatPrice(product.salePrice, language)}</span>
+                  <span className="text-sm text-gray-400 line-through">{formatPrice(product.price, language)}</span>
                 </div>
               ) : (
-                <span className="text-2xl md:text-3xl font-black text-yellow-700">{formatPrice(product.price, language)}</span>
+                <span className="text-xl font-black text-yellow-700">{formatPrice(product.price, language)}</span>
               )}
             </div>
             {discount > 0 && (
-              <Badge className="bg-red-500 text-white text-sm font-bold px-3 py-1">-{discount}%</Badge>
+              <Badge className="bg-red-500 text-white text-xs font-bold">-{discount}%</Badge>
             )}
           </div>
         </div>
 
         {/* Merchant info + Contact Button */}
         {product.merchant && (
-          <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0">
+          <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="w-9 h-9 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {product.merchant.storeName?.[0] || product.merchant.username?.[0] || 'م'}
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base font-bold text-gray-700 truncate">{product.merchant.storeName || product.merchant.username}</span>
-                  {product.merchant.isVerified && <Award className="w-4 h-4 text-blue-500 fill-blue-500 shrink-0" />}
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-bold text-gray-700 truncate">{product.merchant.storeName || product.merchant.username}</span>
+                  {product.merchant.isVerified && <Award className="w-3.5 h-3.5 text-blue-500 fill-blue-500 shrink-0" />}
                 </div>
                 {product.merchant.wilaya && (
-                  <div className="flex items-center gap-1 text-sm text-gray-400">
-                    <MapPin className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-0.5 text-xs text-gray-400">
+                    <MapPin className="w-3 h-3" />
                     <span>{product.merchant.wilaya}</span>
                   </div>
                 )}
@@ -211,9 +211,9 @@ function ProductCard({ product, language, onSelect, onContact, onAddToCart, onFa
             </div>
             <button
               onClick={onContact}
-              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white rounded-xl text-base font-bold transition shadow-md hover:shadow-lg"
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg"
             >
-              <MessageCircle className="w-5 h-5" />
+              <MessageCircle className="w-4 h-4" />
               {t('contact', language)}
             </button>
           </div>
@@ -253,8 +253,8 @@ function ServiceCard({ service, language, onSelect, onContact }: {
 
   return (
     <Card className="deal-card group cursor-pointer overflow-hidden" onClick={onSelect}>
-      {/* Very Large Image Area */}
-      <div className="relative aspect-[4/3] bg-gradient-to-br from-purple-50 to-purple-100 overflow-hidden">
+      {/* Large Image Area */}
+      <div className="relative aspect-[16/10] bg-gradient-to-br from-purple-50 to-purple-100 overflow-hidden">
         {hasImage ? (
           <img
             src={service.images[0]}
@@ -262,107 +262,107 @@ function ServiceCard({ service, language, onSelect, onContact }: {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-purple-100 to-purple-200">
-            <span className="text-7xl">{getServiceEmoji(service.categoryName)}</span>
-            <span className="text-base text-purple-400 font-bold">{service.categoryName || (language === 'ar' ? 'خدمة' : 'Service')}</span>
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-purple-100 to-purple-200">
+            <span className="text-5xl">{getServiceEmoji(service.categoryName)}</span>
+            <span className="text-sm text-purple-400 font-bold">{service.categoryName || (language === 'ar' ? 'خدمة' : 'Service')}</span>
           </div>
         )}
         {/* Gradient overlay on hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
         {/* Top Badges */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+        <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
           {service.provider?.isVerified && (
-            <Badge className="bg-blue-500 text-white text-sm px-3 py-1.5 font-bold shadow-lg">
-              <Award className="w-4 h-4 ml-1" /> {t('verified', language)}
+            <Badge className="bg-blue-500 text-white text-xs px-2.5 py-1 font-bold shadow-lg">
+              <Award className="w-3 h-3 ml-1" /> {t('verified', language)}
             </Badge>
           )}
         </div>
 
         {/* Image count indicator */}
         {service.images && service.images.length > 1 && (
-          <div className="absolute bottom-4 left-4 bg-black/60 text-white text-sm px-3 py-1.5 rounded-lg flex items-center gap-1.5 z-10">
-            <Eye className="w-4 h-4" />
+          <div className="absolute bottom-3 left-3 bg-black/60 text-white text-xs px-2 py-1 rounded-lg flex items-center gap-1 z-10">
+            <Eye className="w-3 h-3" />
             {service.images.length} {language === 'ar' ? 'صور' : 'photos'}
           </div>
         )}
 
         {/* Price Badge on image */}
-        <div className="absolute bottom-4 right-4 z-10">
-          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-4 py-2 shadow-lg">
+        <div className="absolute bottom-3 right-3 z-10">
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-lg">
             {service.price ? (
-              <span className="font-black text-purple-700 text-xl">{formatPrice(service.price, language)}</span>
+              <span className="font-black text-purple-700 text-lg">{formatPrice(service.price, language)}</span>
             ) : (
-              <span className="font-bold text-purple-600 text-base">{t('negotiable', language)}</span>
+              <span className="font-bold text-purple-600">{t('negotiable', language)}</span>
             )}
           </div>
         </div>
       </div>
 
-      {/* Card Content - BIG and Detailed */}
-      <CardContent className="p-6">
+      {/* Card Content - Detailed */}
+      <CardContent className="p-5">
         {/* Category + Price Type */}
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-2">
           {service.categoryName && (
-            <Badge variant="outline" className="text-sm border-purple-300 text-purple-600 bg-purple-50 px-3 py-1">
+            <Badge variant="outline" className="text-xs border-purple-300 text-purple-600 bg-purple-50 px-2 py-0.5">
               {service.categoryName}
             </Badge>
           )}
-          <Badge className="bg-purple-100 text-purple-700 text-sm px-3 py-1">
-            <Clock className="w-4 h-4 ml-1" />
+          <Badge className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5">
+            <Clock className="w-3 h-3 ml-1" />
             {getPriceTypeLabel(service.priceType)}
           </Badge>
         </div>
 
         {/* Title */}
-        <h3 className="font-black text-xl md:text-2xl mb-3 line-clamp-2 leading-snug min-h-[4rem]">{service.title}</h3>
+        <h3 className="font-black text-lg mb-2 line-clamp-2 leading-snug min-h-[3.2rem]">{service.title}</h3>
 
         {/* Description snippet */}
         {service.description && (
-          <p className="text-base text-gray-500 line-clamp-2 mb-4 leading-relaxed">{service.description}</p>
+          <p className="text-sm text-gray-500 line-clamp-2 mb-3 leading-relaxed">{service.description}</p>
         )}
 
         {/* Rating */}
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-0.5">
             {Array.from({ length: 5 }, (_, i) => (
-              <Star key={i} className={`w-5 h-5 ${i < Math.round(service.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+              <Star key={i} className={`w-4 h-4 ${i < Math.round(service.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
             ))}
           </div>
-          <span className="text-base font-bold text-gray-700">{(service.rating || 0).toFixed(1)}</span>
-          <span className="text-sm text-gray-400">({service.reviewCount || 0} {t('reviews', language)})</span>
+          <span className="text-sm font-bold text-gray-700">{(service.rating || 0).toFixed(1)}</span>
+          <span className="text-xs text-gray-400">({service.reviewCount || 0} {t('reviews', language)})</span>
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-blue-50 rounded-xl p-4 text-center border border-blue-100">
-            <Briefcase className="w-5 h-5 mx-auto text-blue-500 mb-1" />
-            <div className="font-black text-xl text-blue-700">{service.completedProjects}</div>
-            <div className="text-xs text-blue-500 font-bold">{t('completedProjects', language)}</div>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="bg-blue-50 rounded-xl p-2.5 text-center border border-blue-100">
+            <Briefcase className="w-4 h-4 mx-auto text-blue-500 mb-0.5" />
+            <div className="font-black text-base text-blue-700">{service.completedProjects}</div>
+            <div className="text-[10px] text-blue-500 font-bold">{t('completedProjects', language)}</div>
           </div>
-          <div className="bg-yellow-50 rounded-xl p-4 text-center border border-yellow-100">
-            <Star className="w-5 h-5 mx-auto text-yellow-500 fill-yellow-500 mb-1" />
-            <div className="font-black text-xl text-yellow-700">{(service.rating || 0).toFixed(1)}</div>
-            <div className="text-xs text-yellow-500 font-bold">{t('rating', language)}</div>
+          <div className="bg-yellow-50 rounded-xl p-2.5 text-center border border-yellow-100">
+            <Star className="w-4 h-4 mx-auto text-yellow-500 fill-yellow-500 mb-0.5" />
+            <div className="font-black text-base text-yellow-700">{(service.rating || 0).toFixed(1)}</div>
+            <div className="text-[10px] text-yellow-500 font-bold">{t('rating', language)}</div>
           </div>
         </div>
 
         {/* Coverage Wilayas snippet */}
         {service.coverageWilayas && service.coverageWilayas.length > 0 && (
-          <div className="mb-4">
-            <div className="flex items-center gap-1.5 text-sm text-gray-400 mb-2">
-              <MapPin className="w-4 h-4" />
+          <div className="mb-3">
+            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1">
+              <MapPin className="w-3 h-3" />
               <span>{t('coverageWilayas', language)}</span>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {service.coverageWilayas.slice(0, 5).map((w, i) => (
-                <Badge key={i} variant="outline" className="text-xs border-purple-200 text-purple-600 bg-purple-50 px-2 py-0.5">
+            <div className="flex flex-wrap gap-1">
+              {service.coverageWilayas.slice(0, 4).map((w, i) => (
+                <Badge key={i} variant="outline" className="text-[10px] border-purple-200 text-purple-600 bg-purple-50 px-1.5 py-0">
                   {w}
                 </Badge>
               ))}
-              {service.coverageWilayas.length > 5 && (
-                <Badge variant="outline" className="text-xs border-gray-200 text-gray-500 bg-gray-50 px-2 py-0.5">
-                  +{service.coverageWilayas.length - 5}
+              {service.coverageWilayas.length > 4 && (
+                <Badge variant="outline" className="text-[10px] border-gray-200 text-gray-500 bg-gray-50 px-1.5 py-0">
+                  +{service.coverageWilayas.length - 4}
                 </Badge>
               )}
             </div>
@@ -371,26 +371,26 @@ function ServiceCard({ service, language, onSelect, onContact }: {
 
         {/* Provider info + Contact Button */}
         {service.provider && (
-          <div className="flex items-center gap-4 pt-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0">
+          <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="w-9 h-9 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
                 {service.provider.username?.[0] || 'م'}
               </div>
               <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base font-bold text-gray-700 truncate">{service.provider.username}</span>
-                  {service.provider.isVerified && <Award className="w-4 h-4 text-blue-500 fill-blue-500 shrink-0" />}
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-bold text-gray-700 truncate">{service.provider.username}</span>
+                  {service.provider.isVerified && <Award className="w-3.5 h-3.5 text-blue-500 fill-blue-500 shrink-0" />}
                 </div>
                 {service.provider.specialty && (
-                  <div className="text-sm text-gray-400 truncate">{service.provider.specialty}</div>
+                  <div className="text-xs text-gray-400 truncate">{service.provider.specialty}</div>
                 )}
               </div>
             </div>
             <button
               onClick={onContact}
-              className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white rounded-xl text-base font-bold transition shadow-md hover:shadow-lg"
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg"
             >
-              <MessageCircle className="w-5 h-5" />
+              <MessageCircle className="w-4 h-4" />
               {t('contact', language)}
             </button>
           </div>
@@ -598,7 +598,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Products Section */}
         {(filterType === 'all' || filterType === 'products') && (
           <section id="products-section" className="mb-16">
@@ -614,9 +614,9 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 gap-10">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-[650px] bg-gray-100 rounded-2xl animate-pulse" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-[500px] bg-gray-100 rounded-2xl animate-pulse" />
                 ))}
               </div>
             ) : products.length === 0 ? (
@@ -625,7 +625,7 @@ export default function HomePage() {
                 <p className="text-xl font-bold">{t('noData', language)}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {products.map(product => (
                   <ProductCard
                     key={product.id}
@@ -657,9 +657,9 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 gap-10">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="h-[650px] bg-gray-100 rounded-2xl animate-pulse" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-[500px] bg-gray-100 rounded-2xl animate-pulse" />
                 ))}
               </div>
             ) : services.length === 0 ? (
@@ -668,7 +668,7 @@ export default function HomePage() {
                 <p className="text-xl font-bold">{t('noData', language)}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {services.map(service => (
                   <ServiceCard
                     key={service.id}
