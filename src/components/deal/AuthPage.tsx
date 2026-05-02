@@ -177,10 +177,10 @@ export default function AuthPage() {
               <div className="border-t pt-4 mt-4">
                 <p className="text-xs text-gray-400 text-center mb-3">تسجيل دخول سريع للعرض التجريبي:</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => { setLoginEmail('admin@deal.dz'); setLoginPassword('admin') }} className="text-xs bg-gray-50 hover:bg-gray-100 p-2 rounded-lg font-bold">👑 مدير</button>
-                  <button type="button" onClick={() => { setLoginEmail('merchant1@deal.dz'); setLoginPassword('merchant') }} className="text-xs bg-gray-50 hover:bg-gray-100 p-2 rounded-lg font-bold">🏪 تاجر</button>
-                  <button type="button" onClick={() => { setLoginEmail('provider1@deal.dz'); setLoginPassword('provider') }} className="text-xs bg-gray-50 hover:bg-gray-100 p-2 rounded-lg font-bold">🔧 مزود خدمة</button>
-                  <button type="button" onClick={() => { setLoginEmail('customer1@deal.dz'); setLoginPassword('customer') }} className="text-xs bg-gray-50 hover:bg-gray-100 p-2 rounded-lg font-bold">👤 زبون</button>
+                  <button type="button" onClick={() => { setLoginEmail('admin@deal.dz'); setLoginPassword('demo123') }} className="text-xs bg-amber-50 hover:bg-amber-100 p-2.5 rounded-xl font-bold border border-amber-200 transition-all hover:shadow-md">👑 مدير النظام</button>
+                  <button type="button" onClick={() => { setLoginEmail('noor@deal.dz'); setLoginPassword('demo123') }} className="text-xs bg-green-50 hover:bg-green-100 p-2.5 rounded-xl font-bold border border-green-200 transition-all hover:shadow-md">🏪 تاجر</button>
+                  <button type="button" onClick={() => { setLoginEmail('karim@deal.dz'); setLoginPassword('demo123') }} className="text-xs bg-blue-50 hover:bg-blue-100 p-2.5 rounded-xl font-bold border border-blue-200 transition-all hover:shadow-md">🔧 مزود خدمة</button>
+                  <button type="button" onClick={() => { setLoginEmail('fatima@deal.dz'); setLoginPassword('demo123') }} className="text-xs bg-purple-50 hover:bg-purple-100 p-2.5 rounded-xl font-bold border border-purple-200 transition-all hover:shadow-md">👤 زبون</button>
                 </div>
               </div>
             </form>
