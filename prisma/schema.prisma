@@ -1,8 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// DEAL Platform - منصة التجارة والخدمات الجزائرية
+// Database Schema
 
 generator client {
   provider = "prisma-client-js"
@@ -14,19 +11,218 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  role         String   @default("customer") // admin, merchant, service_provider, customer
+  phone        String?
+  address      String?
+  wilaya       String?
+  isVerified   Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  storeName    String?  // للتاجر
+  regNumber    String?  // رقم السجل التجاري
+  specialty    String?  // لمقدم الخدمة
+  experience   Int?     @default(0) // سنوات الخبرة
+  docImage     String?  // صورة الشهادة/الوثيقة
+  avatar       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  products         Product[]
+  services         Service[]
+  orders           Order[]          @relation("CustomerOrders")
+  merchantOrders   Order[]          @relation("MerchantOrders")
+  serviceRequests  ServiceRequest[] @relation("CustomerRequests")
+  providedServices ServiceRequest[] @relation("ProviderRequests")
+  sentMessages     Message[]        @relation("SentMessages")
+  receivedMessages Message[]        @relation("ReceivedMessages")
+  notifications    Notification[]
+  reviews          Review[]         @relation("ReviewerReviews")
+  wallet           MerchantWallet?
 }
 
-model Post {
-  id        String   @id @default(cuid())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
+model Category {
+  id       String    @id @default(cuid())
+  nameAr   String
+  nameFr   String?
+  icon     String?
+  parentId String?
+  type     String    @default("product") // product, service
+  parent   Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+  products Product[]
+  services Service[]
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  merchantId  String
+  categoryId  String
+  title       String
+  description String?
+  price       Float
+  stock       Int      @default(0)
+  images      String   @default("[]") // JSON array of image URLs
+  status      String   @default("active") // active, hidden, suspended
+  views       Int      @default(0)
+  isFeatured  Boolean  @default(false)
+  isNew       Boolean  @default(true)
+  isOnSale    Boolean  @default(false)
+  salePrice   Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  merchant   User       @relation(fields: [merchantId], references: [id])
+  category   Category   @relation(fields: [categoryId], references: [id])
+  orderItems OrderItem[]
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  providerId      String
+  categoryId      String
+  title           String
+  description     String?
+  priceType       String   @default("fixed") // fixed, hourly, negotiable
+  price           Float?
+  availabilityDays String  @default("[]") // JSON array of days
+  images          String   @default("[]") // JSON array of image URLs
+  status          String   @default("active") // active, hidden, suspended
+  views           Int      @default(0)
+  completedProjects Int    @default(0)
+  coverageWilayas String   @default("[]") // JSON array of wilaya codes
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  provider  User             @relation(fields: [providerId], references: [id])
+  category  Category         @relation(fields: [categoryId], references: [id])
+  requests  ServiceRequest[]
+}
+
+model Order {
+  id               String   @id @default(cuid())
+  customerId       String
+  merchantId       String
+  totalAmount      Float
+  commissionAmount Float    @default(0)
+  status           String   @default("new") // new, processing, shipped, delivered, cancelled
+  paymentMethod    String   @default("cod") // cod, bank_transfer, ccp
+  deliveryAddress  String?
+  trackingNumber   String?
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  customer      User        @relation("CustomerOrders", fields: [customerId], references: [id])
+  merchant      User        @relation("MerchantOrders", fields: [merchantId], references: [id])
+  items         OrderItem[]
+  transactions  Transaction[]
+}
+
+model OrderItem {
+  id        String @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int    @default(1)
+  unitPrice Float
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model ServiceRequest {
+  id               String   @id @default(cuid())
+  customerId       String
+  providerId       String
+  serviceId        String
+  scheduledDate    DateTime?
+  status           String   @default("pending") // pending, confirmed, in_progress, completed, cancelled
+  totalPrice       Float    @default(0)
+  commissionAmount Float   @default(0)
+  serviceLocation  String?  // home, workshop
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  customer User    @relation("CustomerRequests", fields: [customerId], references: [id])
+  provider User    @relation("ProviderRequests", fields: [providerId], references: [id])
+  service  Service @relation(fields: [serviceId], references: [id])
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  reviewerId String
+  targetId   String   // Can be productId, serviceId, merchantId, or providerId
+  targetType String   // product, service, merchant, provider
+  rating     Int      @default(5) // 1-5
+  comment    String?
+  images     String   @default("[]") // JSON array
+  createdAt  DateTime @default(now())
+
+  reviewer User @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  orderId   String?
+  requestId String?
+  amount    Float
+  commission Float  @default(0)
+  type      String   // sale, withdrawal, commission, refund
+  status    String   @default("completed") // pending, completed, failed
+  createdAt DateTime @default(now())
+
+  order Order? @relation(fields: [orderId], references: [id])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  content    String
+  isRead     Boolean  @default(false)
+  imageUrl   String?
+  createdAt  DateTime @default(now())
+
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   @default("info") // info, order, payment, system
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model MerchantWallet {
+  id                String @id @default(cuid())
+  merchantId        String @unique
+  balance           Float  @default(0)
+  totalEarned       Float  @default(0)
+  totalCommissionPaid Float @default(0)
+  pendingWithdrawal Float  @default(0)
+
+  merchant User @relation(fields: [merchantId], references: [id])
+}
+
+model Complaint {
+  id          String   @id @default(cuid())
+  userId      String
+  targetUserId String?
+  subject     String
+  description String
+  priority    String   @default("medium") // low, medium, high
+  status      String   @default("open") // open, in_progress, resolved, closed
+  resolution  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
