@@ -1,18 +1,25 @@
 'use client'
 
-import { useState } from 'react'
-import { useAppStore, type UserRole, WILAYAS } from '@/lib/store'
-import { Eye, EyeOff, User, Store, Wrench, Shield, Phone, MapPin, FileText, Award } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useAppStore, type UserRole, WILAYAS, WILAYAS_FR } from '@/lib/store'
+import { t } from '@/lib/i18n'
+import { Eye, EyeOff, User, Store, Wrench, Phone, MapPin, FileText, Award, Globe } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
 export default function AuthPage() {
-  const { authMode, setAuthMode, setUser, setCurrentView } = useAppStore()
+  const { authMode, setAuthMode, setUser, setCurrentView, language, setLanguage } = useAppStore()
   const [showPassword, setShowPassword] = useState(false)
   const [selectedRole, setSelectedRole] = useState<UserRole>('customer')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // RTL/LTR switching
+  useEffect(() => {
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'
+    document.documentElement.lang = language
+  }, [language])
 
   // Login form
   const [loginEmail, setLoginEmail] = useState('')
@@ -51,7 +58,7 @@ export default function AuthPage() {
         else setCurrentView('customer-dashboard')
       }
     } catch {
-      setError('حدث خطأ في الاتصال')
+      setError(language === 'ar' ? 'حدث خطأ في الاتصال' : 'Erreur de connexion')
     }
     setLoading(false)
   }
@@ -94,34 +101,71 @@ export default function AuthPage() {
         else setCurrentView('customer-dashboard')
       }
     } catch {
-      setError('حدث خطأ في الاتصال')
+      setError(language === 'ar' ? 'حدث خطأ في الاتصال' : 'Erreur de connexion')
     }
     setLoading(false)
   }
 
+  const toggleLanguage = () => {
+    setLanguage(language === 'ar' ? 'fr' : 'ar')
+  }
+
+  const wilayaList = language === 'ar' ? WILAYAS : WILAYAS_FR
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-50 p-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-black text-green-600 mb-2">🤝 DEAL</h1>
-          <p className="text-gray-500">منصة التجارة والخدمات الجزائرية</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#4A0E2E] to-[#6B1D45] p-4 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-amber-400/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
+        {/* Language Toggle - Top Right */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={toggleLanguage}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-bold text-white/90 transition-all backdrop-blur-sm"
+          >
+            <Globe className="size-3.5" />
+            {language === 'ar' ? 'عربي | FR' : 'AR | Français'}
+          </button>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8 border">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-black mb-2">
+            <span className="gold-shimmer">DEAL</span>
+            <span className="text-2xl ml-2">🤝</span>
+          </h1>
+          <p className="text-white/70 text-sm">
+            {language === 'ar' ? 'منصة التجارة والخدمات الجزائرية' : 'Plateforme de commerce et services algérienne'}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-white/50">
           {/* Mode Toggle */}
           <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-6">
             <button
               onClick={() => { setAuthMode('login'); setError('') }}
-              className={`flex-1 py-3 rounded-lg font-bold transition ${authMode === 'login' ? 'bg-green-500 text-white shadow-md' : 'hover:bg-gray-200'}`}
+              className={`flex-1 py-3 rounded-lg font-bold transition-all ${
+                authMode === 'login'
+                  ? 'bg-amber-500 text-white shadow-md'
+                  : 'hover:bg-gray-200 text-gray-600'
+              }`}
             >
-              تسجيل الدخول
+              {t('login', language)}
             </button>
             <button
               onClick={() => { setAuthMode('register'); setError('') }}
-              className={`flex-1 py-3 rounded-lg font-bold transition ${authMode === 'register' ? 'bg-green-500 text-white shadow-md' : 'hover:bg-gray-200'}`}
+              className={`flex-1 py-3 rounded-lg font-bold transition-all ${
+                authMode === 'register'
+                  ? 'bg-amber-500 text-white shadow-md'
+                  : 'hover:bg-gray-200 text-gray-600'
+              }`}
             >
-              إنشاء حساب
+              {t('register', language)}
             </button>
           </div>
 
@@ -135,31 +179,31 @@ export default function AuthPage() {
           {authMode === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <Label className="font-bold mb-1 block">البريد الإلكتروني</Label>
+                <Label className="font-bold mb-1 block">{t('email', language)}</Label>
                 <Input
                   type="email"
                   value={loginEmail}
                   onChange={e => setLoginEmail(e.target.value)}
                   placeholder="example@email.com"
-                  className="text-right h-12 rounded-xl"
+                  className={`${language === 'ar' ? 'text-right' : 'text-left'} h-12 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
                   required
                 />
               </div>
               <div>
-                <Label className="font-bold mb-1 block">كلمة المرور</Label>
+                <Label className="font-bold mb-1 block">{t('password', language)}</Label>
                 <div className="relative">
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     value={loginPassword}
                     onChange={e => setLoginPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="text-right h-12 rounded-xl pl-10"
+                    className={`${language === 'ar' ? 'text-right' : 'text-left'} h-12 rounded-xl ${language === 'ar' ? 'pl-10' : 'pr-10'} focus:ring-amber-400 focus:border-amber-400`}
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    className={`absolute top-1/2 -translate-y-1/2 text-gray-400 ${language === 'ar' ? 'left-3' : 'right-3'}`}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -170,17 +214,41 @@ export default function AuthPage() {
                 disabled={loading}
                 className="btn-3d btn-3d-primary w-full text-lg h-12"
               >
-                {loading ? 'جاري التحميل...' : 'تسجيل الدخول'}
+                {loading ? t('loading', language) : t('login', language)}
               </button>
 
               {/* Quick login buttons for demo */}
               <div className="border-t pt-4 mt-4">
-                <p className="text-xs text-gray-400 text-center mb-3">تسجيل دخول سريع للعرض التجريبي:</p>
+                <p className="text-xs text-gray-400 text-center mb-3">{t('quickLogin', language)}</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <button type="button" onClick={() => { setLoginEmail('admin@deal.dz'); setLoginPassword('demo123') }} className="text-xs bg-amber-50 hover:bg-amber-100 p-2.5 rounded-xl font-bold border border-amber-200 transition-all hover:shadow-md">👑 مدير النظام</button>
-                  <button type="button" onClick={() => { setLoginEmail('noor@deal.dz'); setLoginPassword('demo123') }} className="text-xs bg-green-50 hover:bg-green-100 p-2.5 rounded-xl font-bold border border-green-200 transition-all hover:shadow-md">🏪 تاجر</button>
-                  <button type="button" onClick={() => { setLoginEmail('karim@deal.dz'); setLoginPassword('demo123') }} className="text-xs bg-blue-50 hover:bg-blue-100 p-2.5 rounded-xl font-bold border border-blue-200 transition-all hover:shadow-md">🔧 مزود خدمة</button>
-                  <button type="button" onClick={() => { setLoginEmail('fatima@deal.dz'); setLoginPassword('demo123') }} className="text-xs bg-purple-50 hover:bg-purple-100 p-2.5 rounded-xl font-bold border border-purple-200 transition-all hover:shadow-md">👤 زبون</button>
+                  <button
+                    type="button"
+                    onClick={() => { setLoginEmail('admin@deal.dz'); setLoginPassword('demo123') }}
+                    className="text-xs bg-amber-50 hover:bg-amber-100 p-2.5 rounded-xl font-bold border border-amber-200 transition-all hover:shadow-md text-amber-800"
+                  >
+                    👑 {t('admin', language)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setLoginEmail('noor@deal.dz'); setLoginPassword('demo123') }}
+                    className="text-xs bg-purple-50 hover:bg-purple-100 p-2.5 rounded-xl font-bold border border-purple-200 transition-all hover:shadow-md text-purple-800"
+                  >
+                    🏪 {t('merchant', language)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setLoginEmail('karim@deal.dz'); setLoginPassword('demo123') }}
+                    className="text-xs bg-amber-50 hover:bg-amber-100 p-2.5 rounded-xl font-bold border border-amber-200 transition-all hover:shadow-md text-amber-800"
+                  >
+                    🔧 {t('serviceProvider', language)}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setLoginEmail('fatima@deal.dz'); setLoginPassword('demo123') }}
+                    className="text-xs bg-purple-50 hover:bg-purple-100 p-2.5 rounded-xl font-bold border border-purple-200 transition-all hover:shadow-md text-purple-800"
+                  >
+                    👤 {t('customer', language)}
+                  </button>
                 </div>
               </div>
             </form>
@@ -191,18 +259,24 @@ export default function AuthPage() {
             <form onSubmit={handleRegister} className="space-y-4">
               {/* Role Selection */}
               <div>
-                <Label className="font-bold mb-2 block">نوع الحساب</Label>
+                <Label className="font-bold mb-2 block">
+                  {language === 'ar' ? 'نوع الحساب' : 'Type de compte'}
+                </Label>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { role: 'customer' as UserRole, icon: <User className="w-5 h-5" />, label: 'زبون' },
-                    { role: 'merchant' as UserRole, icon: <Store className="w-5 h-5" />, label: 'تاجر' },
-                    { role: 'service_provider' as UserRole, icon: <Wrench className="w-5 h-5" />, label: 'مزود خدمة' },
+                    { role: 'customer' as UserRole, icon: <User className="w-5 h-5" />, label: t('customer', language) },
+                    { role: 'merchant' as UserRole, icon: <Store className="w-5 h-5" />, label: t('merchant', language) },
+                    { role: 'service_provider' as UserRole, icon: <Wrench className="w-5 h-5" />, label: t('serviceProvider', language) },
                   ].map(({ role, icon, label }) => (
                     <button
                       key={role}
                       type="button"
                       onClick={() => setSelectedRole(role)}
-                      className={`p-3 rounded-xl border-2 font-bold text-sm flex flex-col items-center gap-1 transition ${selectedRole === role ? 'border-green-500 bg-green-50 text-green-700' : 'border-gray-200 hover:border-green-300'}`}
+                      className={`p-3 rounded-xl border-2 font-bold text-sm flex flex-col items-center gap-1 transition-all ${
+                        selectedRole === role
+                          ? 'border-amber-500 bg-amber-50 text-amber-700'
+                          : 'border-gray-200 hover:border-amber-300'
+                      }`}
                     >
                       {icon}
                       {label}
@@ -212,36 +286,74 @@ export default function AuthPage() {
               </div>
 
               <div>
-                <Label className="font-bold mb-1 block">اسم المستخدم</Label>
-                <Input value={regUsername} onChange={e => setRegUsername(e.target.value)} placeholder="اسمك الكامل" className="text-right h-11 rounded-xl" required />
+                <Label className="font-bold mb-1 block">{t('username', language)}</Label>
+                <Input
+                  value={regUsername}
+                  onChange={e => setRegUsername(e.target.value)}
+                  placeholder={language === 'ar' ? 'اسمك الكامل' : 'Votre nom complet'}
+                  className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
+                  required
+                />
               </div>
 
               <div>
-                <Label className="font-bold mb-1 block">البريد الإلكتروني</Label>
-                <Input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} placeholder="example@email.com" className="text-right h-11 rounded-xl" required />
+                <Label className="font-bold mb-1 block">{t('email', language)}</Label>
+                <Input
+                  type="email"
+                  value={regEmail}
+                  onChange={e => setRegEmail(e.target.value)}
+                  placeholder="example@email.com"
+                  className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
+                  required
+                />
               </div>
 
               <div>
-                <Label className="font-bold mb-1 block">كلمة المرور</Label>
+                <Label className="font-bold mb-1 block">{t('password', language)}</Label>
                 <div className="relative">
-                  <Input type={showPassword ? 'text' : 'password'} value={regPassword} onChange={e => setRegPassword(e.target.value)} placeholder="••••••••" className="text-right h-11 rounded-xl pl-10" required />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={regPassword}
+                    onChange={e => setRegPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl ${language === 'ar' ? 'pl-10' : 'pr-10'} focus:ring-amber-400 focus:border-amber-400`}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className={`absolute top-1/2 -translate-y-1/2 text-gray-400 ${language === 'ar' ? 'left-3' : 'right-3'}`}
+                  >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
               <div>
-                <Label className="font-bold mb-1 block"><Phone className="w-3 h-3 inline ml-1" />رقم الهاتف</Label>
-                <Input value={regPhone} onChange={e => setRegPhone(e.target.value)} placeholder="07XXXXXXXX" className="text-right h-11 rounded-xl" dir="ltr" />
+                <Label className="font-bold mb-1 block">
+                  <Phone className="w-3 h-3 inline mx-1" />
+                  {t('phone', language)}
+                </Label>
+                <Input
+                  value={regPhone}
+                  onChange={e => setRegPhone(e.target.value)}
+                  placeholder="07XXXXXXXX"
+                  className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
+                  dir="ltr"
+                />
               </div>
 
               <div>
-                <Label className="font-bold mb-1 block"><MapPin className="w-3 h-3 inline ml-1" />الولاية</Label>
+                <Label className="font-bold mb-1 block">
+                  <MapPin className="w-3 h-3 inline mx-1" />
+                  {t('wilaya', language)}
+                </Label>
                 <Select value={regWilaya} onValueChange={setRegWilaya}>
-                  <SelectTrigger className="rounded-xl h-11"><SelectValue placeholder="اختر الولاية" /></SelectTrigger>
+                  <SelectTrigger className="rounded-xl h-11 focus:ring-amber-400">
+                    <SelectValue placeholder={language === 'ar' ? 'اختر الولاية' : 'Choisir la wilaya'} />
+                  </SelectTrigger>
                   <SelectContent className="max-h-64">
-                    {WILAYAS.map((w, i) => <SelectItem key={i} value={w}>{w}</SelectItem>)}
+                    {wilayaList.map((w, i) => <SelectItem key={i} value={w}>{w}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -250,12 +362,30 @@ export default function AuthPage() {
               {selectedRole === 'merchant' && (
                 <>
                   <div>
-                    <Label className="font-bold mb-1 block"><Store className="w-3 h-3 inline ml-1" />اسم المتجر</Label>
-                    <Input value={regStoreName} onChange={e => setRegStoreName(e.target.value)} placeholder="اسم متجرك" className="text-right h-11 rounded-xl" required />
+                    <Label className="font-bold mb-1 block">
+                      <Store className="w-3 h-3 inline mx-1" />
+                      {t('storeName', language)}
+                    </Label>
+                    <Input
+                      value={regStoreName}
+                      onChange={e => setRegStoreName(e.target.value)}
+                      placeholder={language === 'ar' ? 'اسم متجرك' : 'Nom de votre magasin'}
+                      className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
+                      required
+                    />
                   </div>
                   <div>
-                    <Label className="font-bold mb-1 block"><FileText className="w-3 h-3 inline ml-1" />رقم السجل التجاري</Label>
-                    <Input value={regRegNumber} onChange={e => setRegRegNumber(e.target.value)} placeholder="رقم السجل" className="text-right h-11 rounded-xl" dir="ltr" />
+                    <Label className="font-bold mb-1 block">
+                      <FileText className="w-3 h-3 inline mx-1" />
+                      {t('regNumber', language)}
+                    </Label>
+                    <Input
+                      value={regRegNumber}
+                      onChange={e => setRegRegNumber(e.target.value)}
+                      placeholder={language === 'ar' ? 'رقم السجل' : 'Numéro de registre'}
+                      className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
+                      dir="ltr"
+                    />
                   </div>
                 </>
               )}
@@ -264,24 +394,47 @@ export default function AuthPage() {
               {selectedRole === 'service_provider' && (
                 <>
                   <div>
-                    <Label className="font-bold mb-1 block"><Award className="w-3 h-3 inline ml-1" />التخصص</Label>
-                    <Input value={regSpecialty} onChange={e => setRegSpecialty(e.target.value)} placeholder="مثال: سباكة، كهرباء..." className="text-right h-11 rounded-xl" required />
+                    <Label className="font-bold mb-1 block">
+                      <Award className="w-3 h-3 inline mx-1" />
+                      {t('specialty', language)}
+                    </Label>
+                    <Input
+                      value={regSpecialty}
+                      onChange={e => setRegSpecialty(e.target.value)}
+                      placeholder={language === 'ar' ? 'مثال: سباكة، كهرباء...' : 'Ex: plomberie, électricité...'}
+                      className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
+                      required
+                    />
                   </div>
                   <div>
-                    <Label className="font-bold mb-1 block">سنوات الخبرة</Label>
-                    <Input type="number" value={regExperience} onChange={e => setRegExperience(e.target.value)} min="0" className="text-right h-11 rounded-xl" dir="ltr" />
+                    <Label className="font-bold mb-1 block">{t('experience', language)}</Label>
+                    <Input
+                      type="number"
+                      value={regExperience}
+                      onChange={e => setRegExperience(e.target.value)}
+                      min="0"
+                      className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
+                      dir="ltr"
+                    />
                   </div>
                 </>
               )}
 
-              <button type="submit" disabled={loading} className="btn-3d btn-3d-primary w-full text-lg h-12">
-                {loading ? 'جاري التحميل...' : 'إنشاء الحساب'}
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-3d btn-3d-primary w-full text-lg h-12"
+              >
+                {loading ? t('loading', language) : t('register', language)}
               </button>
             </form>
           )}
 
-          <button onClick={() => setCurrentView('home')} className="w-full text-center text-sm text-gray-400 hover:text-green-600 mt-4 font-bold">
-            ← العودة إلى الصفحة الرئيسية
+          <button
+            onClick={() => setCurrentView('home')}
+            className={`w-full text-center text-sm text-gray-400 hover:text-amber-600 mt-4 font-bold transition-colors ${language === 'ar' ? '' : ''}`}
+          >
+            {language === 'ar' ? '← العودة إلى الصفحة الرئيسية' : '← Retour à l\'accueil'}
           </button>
         </div>
       </div>

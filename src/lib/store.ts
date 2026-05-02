@@ -1,13 +1,14 @@
 import { create } from 'zustand'
+import type { Language } from './i18n'
 
 // Types
 export type UserRole = 'admin' | 'merchant' | 'service_provider' | 'customer'
 export type AppView = 'home' | 'auth' | 'merchant-dashboard' | 'provider-dashboard' | 'customer-dashboard' | 'admin-dashboard'
 export type AuthMode = 'login' | 'register'
-export type MerchantTab = 'overview' | 'products' | 'orders' | 'wallet' | 'reviews'
-export type ProviderTab = 'overview' | 'services' | 'bookings' | 'wallet' | 'reviews'
+export type MerchantTab = 'overview' | 'products' | 'orders' | 'wallet' | 'reviews' | 'chat'
+export type ProviderTab = 'overview' | 'services' | 'bookings' | 'wallet' | 'reviews' | 'chat'
 export type CustomerTab = 'overview' | 'cart' | 'orders' | 'favorites' | 'chat' | 'reviews'
-export type AdminTab = 'overview' | 'users' | 'commissions' | 'categories' | 'complaints' | 'settings'
+export type AdminTab = 'overview' | 'users' | 'commissions' | 'categories' | 'complaints' | 'settings' | 'chat'
 export type OrderStatus = 'new' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
 export type ServiceRequestStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
 
@@ -20,7 +21,9 @@ export interface User {
   address?: string
   wilaya?: string
   isVerified: boolean
+  isActive?: boolean
   storeName?: string
+  regNumber?: string
   specialty?: string
   experience?: number
   avatar?: string
@@ -140,6 +143,32 @@ export interface Wallet {
   pendingWithdrawal: number
 }
 
+export interface Message {
+  id: string
+  senderId: string
+  receiverId: string
+  content: string
+  isRead: boolean
+  imageUrl?: string
+  createdAt: string
+  senderName?: string
+  receiverName?: string
+  senderAvatar?: string
+}
+
+export interface Review {
+  id: string
+  reviewerId: string
+  targetId: string
+  targetType: string
+  rating: number
+  comment?: string
+  images: string[]
+  createdAt: string
+  reviewerName?: string
+  reviewerAvatar?: string
+}
+
 // App Store
 interface AppStore {
   // Navigation
@@ -154,6 +183,10 @@ interface AppStore {
   // Auth mode
   authMode: AuthMode
   setAuthMode: (mode: AuthMode) => void
+  
+  // Language
+  language: Language
+  setLanguage: (lang: Language) => void
   
   // Dashboard tabs
   merchantTab: MerchantTab
@@ -178,6 +211,12 @@ interface AppStore {
   setSelectedWilaya: (w: string) => void
   sortBy: string
   setSortBy: (s: string) => void
+  
+  // Detail modal
+  selectedProduct: Product | null
+  setSelectedProduct: (p: Product | null) => void
+  selectedService: Service | null
+  setSelectedService: (s: Service | null) => void
   
   // Cart
   cart: CartItem[]
@@ -211,6 +250,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
   authMode: 'login',
   setAuthMode: (mode) => set({ authMode: mode }),
   
+  // Language
+  language: 'ar',
+  setLanguage: (lang) => set({ language: lang }),
+  
   // Dashboard tabs
   merchantTab: 'overview',
   setMerchantTab: (tab) => set({ merchantTab: tab }),
@@ -234,6 +277,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setSelectedWilaya: (w) => set({ selectedWilaya: w }),
   sortBy: 'newest',
   setSortBy: (s) => set({ sortBy: s }),
+  
+  // Detail modal
+  selectedProduct: null,
+  setSelectedProduct: (p) => set({ selectedProduct: p }),
+  selectedService: null,
+  setSelectedService: (s) => set({ selectedService: s }),
   
   // Cart
   cart: [],
@@ -286,12 +335,25 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setIsLoading: (l) => set({ isLoading: l }),
 }))
 
-// Algerian Wilayas
+// Algerian Wilayas - 58 wilayas (including the 2 new ones from 2019)
 export const WILAYAS = [
   'أدرار', 'الشلف', 'الأغواط', 'أم البواقي', 'باتنة', 'بجاية', 'بسكرة', 'بشار',
   'البليدة', 'البويرة', 'تمنراست', 'تبسة', 'تلمسان', 'تيارت', 'تيزي وزو', 'الجزائر',
   'الجلفة', 'جيجل', 'سطيف', 'سعيدة', 'سكيكدة', 'سيدي بلعباس', 'عنابة', 'قالمة',
   'قسنطينة', 'المدية', 'مستغانم', 'المسيلة', 'معسكر', 'ورقلة', 'وهران', 'البيض',
   'إليزي', 'برج بوعريريج', 'بومرداس', 'الطارف', 'تندوف', 'تيسمسيلت', 'الوادي', 'خنشلة',
-  'سوق أهراس', 'تيبازة', 'ميلة', 'عين الدفلى', 'النعامة', 'عين تموشنت', 'غرداية', 'غليزان'
+  'سوق أهراس', 'تيبازة', 'ميلة', 'عين الدفلى', 'النعامة', 'عين تموشنت', 'غرداية', 'غليزان',
+  'تيميمون', 'برج باجي مختار', 'أولاد جلال', 'بني عباس', 'عين صالح', 'عين قزام',
+  'تقرت', 'جانت', 'المغير', 'المنيعة'
+]
+
+export const WILAYAS_FR = [
+  'Adrar', 'Chlef', 'Laghouat', 'Oum El Bouaghi', 'Batna', 'Béjaïa', 'Biskra', 'Béchar',
+  'Blida', 'Bouira', 'Tamanrasset', 'Tébessa', 'Tlemcen', 'Tiaret', 'Tizi Ouzou', 'Alger',
+  'Djelfa', 'Jijel', 'Sétif', 'Saïda', 'Skikda', 'Sidi Bel Abbès', 'Annaba', 'Guelma',
+  'Constantine', 'Médéa', 'Mostaganem', 'M\'Sila', 'Mascara', 'Ouargla', 'Oran', 'El Bayadh',
+  'Illizi', 'Bordj Bou Arréridj', 'Boumerdès', 'El Tarf', 'Tindouf', 'Tissemsilt', 'El Oued', 'Khenchela',
+  'Souk Ahras', 'Tipaza', 'Mila', 'Aïn Defla', 'Naâma', 'Aïn Témouchent', 'Ghardaïa', 'Relizane',
+  'Timimoun', 'Bordj Badji Mokhtar', 'Ouled Djellal', 'Béni Abbès', 'In Salah', 'In Guezzam',
+  'Touggourt', 'Djanet', 'El M\'Ghair', 'El Meniaa'
 ]

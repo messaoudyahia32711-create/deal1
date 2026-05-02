@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useAppStore, type Product, type Order, type Wallet } from '@/lib/store'
-import { Package, ShoppingCart, Star, Eye, Plus, Edit, Trash2, ToggleLeft, TrendingUp, Wallet as WalletIcon, ChevronDown, ChevronUp } from 'lucide-react'
+import { t, formatPrice } from '@/lib/i18n'
+import MessagePanel from '@/components/deal/MessagePanel'
+import { Package, ShoppingCart, Star, Eye, Plus, Edit, Trash2, ToggleLeft, TrendingUp, Wallet as WalletIcon, ChevronDown, ChevronUp, Image as ImageIcon, X, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -13,24 +15,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-function formatPrice(price: number) {
-  return new Intl.NumberFormat('ar-DZ').format(price) + ' دج'
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    new: { label: 'جديد 🔴', cls: 'bg-red-500 text-white' },
-    processing: { label: 'قيد التجهيز 🟡', cls: 'bg-yellow-500 text-white' },
-    shipped: { label: 'تم الشحن 🔵', cls: 'bg-blue-500 text-white' },
-    delivered: { label: 'مكتمل ✅', cls: 'bg-green-500 text-white' },
-    cancelled: { label: 'ملغى ❌', cls: 'bg-gray-400 text-white' },
+function StatusBadge({ status, language }: { status: string; language: 'ar' | 'fr' }) {
+  const statusLabels: Record<string, { ar: string; fr: string; cls: string }> = {
+    new: { ar: 'جديد 🔴', fr: 'Nouvelle 🔴', cls: 'bg-red-500 text-white' },
+    processing: { ar: 'قيد التجهيز 🟡', fr: 'En préparation 🟡', cls: 'bg-yellow-500 text-white' },
+    shipped: { ar: 'تم الشحن 🔵', fr: 'Expédiée 🔵', cls: 'bg-blue-500 text-white' },
+    delivered: { ar: 'مكتمل ✅', fr: 'Livrée ✅', cls: 'bg-amber-500 text-white' },
+    cancelled: { ar: 'ملغى ❌', fr: 'Annulée ❌', cls: 'bg-gray-400 text-white' },
   }
-  const s = map[status] || { label: status, cls: 'bg-gray-200' }
-  return <Badge className={`${s.cls} font-bold text-xs`}>{s.label}</Badge>
+  const s = statusLabels[status] || { ar: status, fr: status, cls: 'bg-gray-200' }
+  return <Badge className={`${s.cls} font-bold text-xs`}>{language === 'ar' ? s.ar : s.fr}</Badge>
 }
 
 export default function MerchantDashboard() {
-  const { user, merchantTab, setMerchantTab } = useAppStore()
+  const { user, merchantTab, setMerchantTab, language } = useAppStore()
   const [products, setProducts] = useState<Product[]>([])
   const [orders, setOrders] = useState<Order[]>([])
   const [wallet, setWallet] = useState<Wallet | null>(null)
@@ -41,6 +39,9 @@ export default function MerchantDashboard() {
 
   // Add product form
   const [newProd, setNewProd] = useState({ title: '', description: '', price: '', stock: '', categoryId: '' })
+  const [prodImage, setProdImage] = useState<File | null>(null)
+  const [prodImagePreview, setProdImagePreview] = useState<string | null>(null)
+  const [uploadingProd, setUploadingProd] = useState(false)
 
   async function loadData() {
     if (!user?.id) return
@@ -84,6 +85,21 @@ export default function MerchantDashboard() {
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault()
     try {
+      let imageUrl = ''
+
+      // Upload image if selected
+      if (prodImage) {
+        setUploadingProd(true)
+        const formData = new FormData()
+        formData.append('file', prodImage)
+        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
+        const uploadData = await uploadRes.json()
+        if (uploadData.data?.url) {
+          imageUrl = uploadData.data.url
+        }
+        setUploadingProd(false)
+      }
+
       await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -94,15 +110,27 @@ export default function MerchantDashboard() {
           price: parseFloat(newProd.price),
           stock: parseInt(newProd.stock),
           categoryId: newProd.categoryId,
-          images: '[]',
+          images: JSON.stringify(imageUrl ? [imageUrl] : []),
         }),
       })
       setAddDialogOpen(false)
       setNewProd({ title: '', description: '', price: '', stock: '', categoryId: '' })
+      setProdImage(null)
+      setProdImagePreview(null)
       loadData()
     } catch (e) {
       console.error(e)
     }
+  }
+
+  function handleProdImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !file.type.startsWith('image/')) return
+    if (file.size > 5 * 1024 * 1024) return
+    setProdImage(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setProdImagePreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
   }
 
   async function updateOrderStatus(orderId: string, status: string) {
@@ -127,30 +155,31 @@ export default function MerchantDashboard() {
     <div className="min-h-screen bg-gray-50/50">
       <div className="max-w-6xl mx-auto p-4 md:p-6">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center text-2xl">🏪</div>
+          <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-2xl">🏪</div>
           <div>
-            <h1 className="text-2xl font-black">لوحة تحكم التاجر</h1>
+            <h1 className="text-2xl font-black">{t('merchantPanel', language)}</h1>
             <p className="text-sm text-gray-500">{user?.storeName || user?.username}</p>
           </div>
         </div>
 
         <Tabs value={merchantTab} onValueChange={(v) => setMerchantTab(v as any)} dir="rtl">
           <TabsList className="mb-6 flex-wrap h-auto gap-1 bg-white rounded-xl p-1 shadow-sm">
-            <TabsTrigger value="overview" className="rounded-lg font-bold">📊 نظرة عامة</TabsTrigger>
-            <TabsTrigger value="products" className="rounded-lg font-bold">📦 المنتجات</TabsTrigger>
-            <TabsTrigger value="orders" className="rounded-lg font-bold">🛒 الطلبات</TabsTrigger>
-            <TabsTrigger value="wallet" className="rounded-lg font-bold">💰 المحفظة</TabsTrigger>
-            <TabsTrigger value="reviews" className="rounded-lg font-bold">⭐ التقييمات</TabsTrigger>
+            <TabsTrigger value="overview" className="rounded-lg font-bold">📊 {t('overview', language)}</TabsTrigger>
+            <TabsTrigger value="products" className="rounded-lg font-bold">📦 {t('products', language)}</TabsTrigger>
+            <TabsTrigger value="orders" className="rounded-lg font-bold">🛒 {t('orders', language)}</TabsTrigger>
+            <TabsTrigger value="wallet" className="rounded-lg font-bold">💰 {t('wallet', language)}</TabsTrigger>
+            <TabsTrigger value="reviews" className="rounded-lg font-bold">⭐ {t('reviews', language)}</TabsTrigger>
+            <TabsTrigger value="chat" className="rounded-lg font-bold">💬 {t('chat', language)}</TabsTrigger>
           </TabsList>
 
           {/* Overview */}
           <TabsContent value="overview">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               {[
-                { icon: '💰', label: 'مبيعات اليوم', value: formatPrice(stats.todaySales), color: 'from-green-50 to-emerald-50 border-green-200' },
-                { icon: '📦', label: 'طلبات جديدة', value: stats.newOrders.toString(), color: 'from-blue-50 to-cyan-50 border-blue-200' },
-                { icon: '⭐', label: 'تقييمك', value: stats.rating.toFixed(1), color: 'from-yellow-50 to-amber-50 border-yellow-200' },
-                { icon: '👁️', label: 'مشاهدات اليوم', value: stats.views.toString(), color: 'from-purple-50 to-pink-50 border-purple-200' },
+                { icon: '💰', label: t('todaySales', language), value: formatPrice(stats.todaySales, language), color: 'from-amber-50 to-yellow-50 border-amber-200' },
+                { icon: '📦', label: t('newOrders', language), value: stats.newOrders.toString(), color: 'from-purple-50 to-violet-50 border-purple-200' },
+                { icon: '⭐', label: t('yourRating', language), value: stats.rating.toFixed(1), color: 'from-yellow-50 to-amber-50 border-yellow-200' },
+                { icon: '👁️', label: t('todayViews', language), value: stats.views.toString(), color: 'from-pink-50 to-rose-50 border-pink-200' },
               ].map((card, i) => (
                 <Card key={i} className={`bg-gradient-to-br ${card.color} border-2`}>
                   <CardContent className="p-4 text-center">
@@ -163,68 +192,100 @@ export default function MerchantDashboard() {
             </div>
 
             {/* Commission Calculator */}
-            <Card className="commission-highlight">
+            <Card className="bg-gradient-to-br from-purple-50 to-violet-50 border-2 border-purple-300">
               <CardHeader>
-                <CardTitle className="text-lg font-black flex items-center gap-2">🧮 حاسبة العمولة</CardTitle>
+                <CardTitle className="text-lg font-black flex items-center gap-2">🧮 {language === 'ar' ? 'حاسبة العمولة' : 'Calculateur de commission'}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <div className="text-sm text-gray-500 font-bold">إجمالي المبيعات</div>
-                    <div className="text-xl font-black">{formatPrice(totalSales)}</div>
+                    <div className="text-sm text-gray-500 font-bold">{t('totalSales', language)}</div>
+                    <div className="text-xl font-black">{formatPrice(totalSales, language)}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 font-bold">عمولة المنصة (1.5%)</div>
-                    <div className="text-xl font-black text-red-500">{formatPrice(commission)}</div>
+                    <div className="text-sm text-gray-500 font-bold">{t('platformCommission', language)} (1.5%)</div>
+                    <div className="text-xl font-black text-red-500">{formatPrice(commission, language)}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 font-bold">صافي الربح</div>
-                    <div className="text-xl font-black text-green-600">{formatPrice(netProfit)}</div>
+                    <div className="text-sm text-gray-500 font-bold">{t('netProfit', language)}</div>
+                    <div className="text-xl font-black text-amber-600">{formatPrice(netProfit, language)}</div>
                   </div>
                 </div>
                 <div className="mt-4 p-3 bg-white rounded-xl text-center text-sm font-bold text-gray-600">
-                  مثال: مبيعات: 10,000 دج → عمولة: 150 دج → صافي: 9,850 دج ✅
+                  {language === 'ar' 
+                    ? `مثال: مبيعات: 10,000 دج → عمولة: 150 دج → صافي: 9,850 دج ✅`
+                    : `Exemple: ventes: 10 000 DA → commission: 150 DA → net: 9 850 DA ✅`
+                  }
                 </div>
                 {totalSales > 0 && (
-                  <div className="mt-3 p-2 bg-yellow-50 rounded-xl text-center text-sm font-bold text-yellow-700">
-                    ⚠️ سيتم خصم {formatPrice(commission)} كعمولة للمنصة
+                  <div className="mt-3 p-2 bg-amber-50 rounded-xl text-center text-sm font-bold text-amber-700">
+                    ⚠️ {language === 'ar' 
+                      ? `سيتم خصم ${formatPrice(commission, language)} كعمولة للمنصة`
+                      : `${formatPrice(commission, language)} sera déduit comme commission plateforme`
+                    }
                   </div>
                 )}
               </CardContent>
             </Card>
 
             <div className="mt-4 p-4 bg-white rounded-xl shadow-sm">
-              <p className="text-lg font-bold text-green-600">📈 مبيعاتك ارتفعت 12% هذا الأسبوع</p>
+              <p className="text-lg font-bold text-amber-600">📈 {language === 'ar' ? 'مبيعاتك ارتفعت 12% هذا الأسبوع' : 'Vos ventes ont augmenté de 12% cette semaine'}</p>
             </div>
           </TabsContent>
 
           {/* Products */}
           <TabsContent value="products">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-black">المنتجات ({products.length})</h2>
+              <h2 className="text-lg font-black">{t('products', language)} ({products.length})</h2>
               <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <button className="btn-3d btn-3d-primary"><Plus className="w-4 h-4" /> إضافة منتج</button>
+                  <button className="btn-3d btn-3d-primary"><Plus className="w-4 h-4" /> {t('addProduct', language)}</button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md" dir="rtl">
                   <DialogHeader>
-                    <DialogTitle className="font-black">إضافة منتج جديد</DialogTitle>
+                    <DialogTitle className="font-black">{t('addProduct', language)}</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleAddProduct} className="space-y-3">
-                    <div><Label className="font-bold">اسم المنتج</Label><Input value={newProd.title} onChange={e => setNewProd(p => ({ ...p, title: e.target.value }))} required className="rounded-xl" /></div>
-                    <div><Label className="font-bold">الوصف</Label><Textarea value={newProd.description} onChange={e => setNewProd(p => ({ ...p, description: e.target.value }))} className="rounded-xl" /></div>
+                    <div><Label className="font-bold">{t('productName', language)}</Label><Input value={newProd.title} onChange={e => setNewProd(p => ({ ...p, title: e.target.value }))} required className="rounded-xl" /></div>
+                    <div><Label className="font-bold">{t('productDescription', language)}</Label><Textarea value={newProd.description} onChange={e => setNewProd(p => ({ ...p, description: e.target.value }))} className="rounded-xl" /></div>
                     <div className="grid grid-cols-2 gap-3">
-                      <div><Label className="font-bold">السعر (دج)</Label><Input type="number" value={newProd.price} onChange={e => setNewProd(p => ({ ...p, price: e.target.value }))} required className="rounded-xl" dir="ltr" /></div>
-                      <div><Label className="font-bold">الكمية</Label><Input type="number" value={newProd.stock} onChange={e => setNewProd(p => ({ ...p, stock: e.target.value }))} required className="rounded-xl" dir="ltr" /></div>
+                      <div><Label className="font-bold">{t('price', language)} ({t('currency', language)})</Label><Input type="number" value={newProd.price} onChange={e => setNewProd(p => ({ ...p, price: e.target.value }))} required className="rounded-xl" dir="ltr" /></div>
+                      <div><Label className="font-bold">{t('stock', language)}</Label><Input type="number" value={newProd.stock} onChange={e => setNewProd(p => ({ ...p, stock: e.target.value }))} required className="rounded-xl" dir="ltr" /></div>
                     </div>
                     <div>
-                      <Label className="font-bold">الفئة</Label>
+                      <Label className="font-bold">{t('category', language)}</Label>
                       <Select value={newProd.categoryId} onValueChange={v => setNewProd(p => ({ ...p, categoryId: v }))}>
-                        <SelectTrigger className="rounded-xl"><SelectValue placeholder="اختر الفئة" /></SelectTrigger>
+                        <SelectTrigger className="rounded-xl"><SelectValue placeholder={language === 'ar' ? 'اختر الفئة' : 'Choisir catégorie'} /></SelectTrigger>
                         <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.nameAr}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
-                    <button type="submit" className="btn-3d btn-3d-primary w-full">إضافة المنتج</button>
+                    {/* Image Upload */}
+                    <div>
+                      <Label className="font-bold">{t('image', language)}</Label>
+                      <div className="mt-1">
+                        {prodImagePreview ? (
+                          <div className="relative inline-block">
+                            <img src={prodImagePreview} alt="" className="w-24 h-24 rounded-xl object-cover border-2 border-purple-200" />
+                            <button
+                              type="button"
+                              onClick={() => { setProdImage(null); setProdImagePreview(null) }}
+                              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="flex items-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition">
+                            <ImageIcon className="w-5 h-5 text-gray-400" />
+                            <span className="text-sm text-gray-500">{t('uploadImage', language)}</span>
+                            <input type="file" accept="image/*" className="hidden" onChange={handleProdImageSelect} />
+                          </label>
+                        )}
+                      </div>
+                    </div>
+                    <button type="submit" disabled={uploadingProd} className="btn-3d btn-3d-primary w-full disabled:opacity-50">
+                      {uploadingProd ? <Loader2 className="w-4 h-4 animate-spin inline" /> : t('addProduct', language)}
+                    </button>
                   </form>
                 </DialogContent>
               </Dialog>
@@ -238,14 +299,14 @@ export default function MerchantDashboard() {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold truncate">{product.title}</h3>
                       <div className="flex items-center gap-3 text-sm">
-                        <span className="font-bold text-green-600">{formatPrice(product.price)}</span>
+                        <span className="font-bold text-amber-600">{formatPrice(product.price, language)}</span>
                         <span className={`font-bold ${product.stock > 10 ? 'stock-green' : product.stock > 0 ? 'stock-orange' : 'stock-red'}`}>
-                          المخزون: {product.stock}
+                          {t('stock', language)}: {product.stock}
                         </span>
                       </div>
                     </div>
-                    <Badge className={product.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
-                      {product.status === 'active' ? 'نشط' : 'مخفي'}
+                    <Badge className={product.status === 'active' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}>
+                      {product.status === 'active' ? (language === 'ar' ? 'نشط' : 'Actif') : (language === 'ar' ? 'مخفي' : 'Masqué')}
                     </Badge>
                     <div className="flex gap-1">
                       <Button size="sm" variant="ghost"><Edit className="w-4 h-4" /></Button>
@@ -259,70 +320,77 @@ export default function MerchantDashboard() {
 
           {/* Orders */}
           <TabsContent value="orders">
-            <h2 className="text-lg font-black mb-4">الطلبات ({orders.length})</h2>
+            <h2 className="text-lg font-black mb-4">{t('orders', language)} ({orders.length})</h2>
             <div className="grid gap-3">
               {orders.map(order => (
                 <Card key={order.id} className="shadow-sm">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <StatusBadge status={order.status} />
+                        <StatusBadge status={order.status} language={language} />
                         <span className="text-sm text-gray-500">#{order.id.slice(-6)}</span>
                       </div>
-                      <span className="font-black text-green-600">{formatPrice(order.totalAmount)}</span>
+                      <span className="font-black text-amber-600">{formatPrice(order.totalAmount, language)}</span>
                     </div>
                     <div className="text-sm text-gray-500 mb-3">
-                      <span>العمولة: {formatPrice(order.commissionAmount)}</span>
+                      <span>{t('commission', language)}: {formatPrice(order.commissionAmount, language)}</span>
                       <span className="mx-2">|</span>
-                      <span>الدفع: {order.paymentMethod === 'cod' ? 'عند الاستلام' : order.paymentMethod === 'bank_transfer' ? 'تحويل بنكي' : 'CCP'}</span>
+                      <span>{t('paymentMethod', language)}: {order.paymentMethod === 'cod' ? t('cod', language) : order.paymentMethod === 'bank_transfer' ? t('bankTransfer', language) : t('ccp', language)}</span>
                     </div>
                     {order.items && order.items.map(item => (
                       <div key={item.id} className="text-sm bg-gray-50 rounded-lg p-2 mb-1 flex justify-between">
-                        <span>{item.productTitle || `منتج #${item.productId.slice(-6)}`}</span>
-                        <span>×{item.quantity} = {formatPrice(item.unitPrice * item.quantity)}</span>
+                        <span>{item.productTitle || `${t('products', language)} #${item.productId.slice(-6)}`}</span>
+                        <span>×{item.quantity} = {formatPrice(item.unitPrice * item.quantity, language)}</span>
                       </div>
                     ))}
                     <div className="flex gap-2 mt-3">
                       {order.status === 'new' && (
-                        <button onClick={() => updateOrderStatus(order.id, 'processing')} className="btn-3d btn-3d-secondary text-xs py-1.5 px-3">بدء التجهيز</button>
+                        <button onClick={() => updateOrderStatus(order.id, 'processing')} className="btn-3d btn-3d-secondary text-xs py-1.5 px-3">{language === 'ar' ? 'بدء التجهيز' : 'Commencer la préparation'}</button>
                       )}
                       {order.status === 'processing' && (
-                        <button onClick={() => updateOrderStatus(order.id, 'shipped')} className="btn-3d btn-3d-primary text-xs py-1.5 px-3">تم الشحن</button>
+                        <button onClick={() => updateOrderStatus(order.id, 'shipped')} className="btn-3d btn-3d-primary text-xs py-1.5 px-3">{language === 'ar' ? 'تم الشحن' : 'Expédiée'}</button>
                       )}
                       {order.status === 'shipped' && (
-                        <button onClick={() => updateOrderStatus(order.id, 'delivered')} className="btn-3d btn-3d-primary text-xs py-1.5 px-3">تم التسليم</button>
+                        <button onClick={() => updateOrderStatus(order.id, 'delivered')} className="btn-3d btn-3d-primary text-xs py-1.5 px-3">{language === 'ar' ? 'تم التسليم' : 'Livrée'}</button>
                       )}
                     </div>
                   </CardContent>
                 </Card>
               ))}
-              {orders.length === 0 && <div className="text-center py-12 text-gray-400"><Package className="w-12 h-12 mx-auto mb-2 opacity-30" /><p>لا توجد طلبات بعد</p></div>}
+              {orders.length === 0 && <div className="text-center py-12 text-gray-400"><Package className="w-12 h-12 mx-auto mb-2 opacity-30" /><p>{language === 'ar' ? 'لا توجد طلبات بعد' : 'Aucune commande pour le moment'}</p></div>}
             </div>
           </TabsContent>
 
           {/* Wallet */}
           <TabsContent value="wallet">
-            <Card className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 mb-6">
+            <Card className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-200 mb-6">
               <CardContent className="p-6 text-center">
-                <div className="text-sm text-gray-500 font-bold mb-1">💰 رصيد المحفظة</div>
-                <div className="text-4xl font-black text-green-600 mb-4">{formatPrice(wallet?.balance || 0)}</div>
+                <div className="text-sm text-gray-500 font-bold mb-1">💰 {t('balance', language)}</div>
+                <div className="text-4xl font-black text-amber-600 mb-4">{formatPrice(wallet?.balance || 0, language)}</div>
                 <div className="grid grid-cols-3 gap-4 text-center">
-                  <div><div className="text-xs text-gray-400">إجمالي الأرباح</div><div className="font-bold">{formatPrice(wallet?.totalEarned || 0)}</div></div>
-                  <div><div className="text-xs text-gray-400">العمولات المدفوعة</div><div className="font-bold text-red-500">{formatPrice(wallet?.totalCommissionPaid || 0)}</div></div>
-                  <div><div className="text-xs text-gray-400">قيد السحب</div><div className="font-bold text-yellow-600">{formatPrice(wallet?.pendingWithdrawal || 0)}</div></div>
+                  <div><div className="text-xs text-gray-400">{t('totalEarned', language)}</div><div className="font-bold">{formatPrice(wallet?.totalEarned || 0, language)}</div></div>
+                  <div><div className="text-xs text-gray-400">{t('commissionPaid', language)}</div><div className="font-bold text-red-500">{formatPrice(wallet?.totalCommissionPaid || 0, language)}</div></div>
+                  <div><div className="text-xs text-gray-400">{t('pendingWithdrawal', language)}</div><div className="font-bold text-yellow-600">{formatPrice(wallet?.pendingWithdrawal || 0, language)}</div></div>
                 </div>
               </CardContent>
             </Card>
-            <button className="btn-3d btn-3d-primary w-full mb-6">طلب سحب الأرباح</button>
+            <button className="btn-3d btn-3d-primary w-full mb-6">{t('withdrawRequest', language)}</button>
           </TabsContent>
 
           {/* Reviews */}
           <TabsContent value="reviews">
             <div className="text-center py-12">
               <Star className="w-16 h-16 mx-auto mb-4 text-yellow-400" />
-              <h3 className="text-xl font-black mb-2">تقييمك: 4.8 ⭐</h3>
-              <p className="text-gray-400">بناءً على 24 تقييم</p>
+              <h3 className="text-xl font-black mb-2">{t('yourRating', language)}: 4.8 ⭐</h3>
+              <p className="text-gray-400">{language === 'ar' ? 'بناءً على 24 تقييم' : 'Basé sur 24 avis'}</p>
             </div>
+          </TabsContent>
+
+          {/* Chat */}
+          <TabsContent value="chat">
+            {user ? (
+              <MessagePanel userId={user.id} userRole={user.role} language={language} />
+            ) : null}
           </TabsContent>
         </Tabs>
       </div>

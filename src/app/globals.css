@@ -47,60 +47,66 @@
   --color-deal-success: var(--deal-success);
   --color-deal-warning: var(--deal-warning);
   --color-deal-danger: var(--deal-danger);
+  --color-deal-gold: var(--deal-gold);
+  --color-deal-purple: var(--deal-purple);
 }
 
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.985 0.002 120);
-  --foreground: oklch(0.17 0.02 260);
+  --background: oklch(0.98 0.005 300);
+  --foreground: oklch(0.17 0.03 300);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.17 0.02 260);
+  --card-foreground: oklch(0.17 0.03 300);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.17 0.02 260);
-  --primary: oklch(0.55 0.2 150);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.94 0.01 150);
-  --secondary-foreground: oklch(0.25 0.02 150);
-  --muted: oklch(0.96 0.005 120);
-  --muted-foreground: oklch(0.5 0.01 260);
-  --accent: oklch(0.92 0.02 80);
-  --accent-foreground: oklch(0.25 0.04 80);
+  --popover-foreground: oklch(0.17 0.03 300);
+  --primary: oklch(0.7 0.18 80);
+  --primary-foreground: oklch(0.15 0.05 50);
+  --secondary: oklch(0.93 0.02 300);
+  --secondary-foreground: oklch(0.3 0.05 300);
+  --muted: oklch(0.95 0.01 300);
+  --muted-foreground: oklch(0.5 0.02 300);
+  --accent: oklch(0.92 0.03 300);
+  --accent-foreground: oklch(0.25 0.05 300);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.91 0.01 120);
-  --input: oklch(0.91 0.01 120);
-  --ring: oklch(0.55 0.2 150);
-  --chart-1: oklch(0.55 0.2 150);
-  --chart-2: oklch(0.65 0.15 80);
-  --chart-3: oklch(0.55 0.18 260);
-  --chart-4: oklch(0.7 0.15 40);
+  --border: oklch(0.9 0.02 300);
+  --input: oklch(0.9 0.02 300);
+  --ring: oklch(0.7 0.18 80);
+  --chart-1: oklch(0.7 0.18 80);
+  --chart-2: oklch(0.45 0.2 330);
+  --chart-3: oklch(0.55 0.18 300);
+  --chart-4: oklch(0.7 0.15 60);
   --chart-5: oklch(0.6 0.2 340);
-  --deal-primary: oklch(0.55 0.2 150);
-  --deal-secondary: oklch(0.65 0.15 80);
-  --deal-accent: oklch(0.75 0.18 200);
+  --deal-primary: oklch(0.7 0.18 80);
+  --deal-secondary: oklch(0.45 0.2 330);
+  --deal-accent: oklch(0.75 0.15 300);
   --deal-success: oklch(0.65 0.2 145);
   --deal-warning: oklch(0.75 0.18 80);
   --deal-danger: oklch(0.6 0.22 25);
+  --deal-gold: oklch(0.82 0.16 80);
+  --deal-purple: oklch(0.4 0.18 330);
 }
 
 .dark {
-  --background: oklch(0.14 0.01 260);
-  --foreground: oklch(0.96 0.005 120);
-  --card: oklch(0.19 0.015 260);
-  --card-foreground: oklch(0.96 0.005 120);
-  --popover: oklch(0.19 0.015 260);
-  --popover-foreground: oklch(0.96 0.005 120);
-  --primary: oklch(0.6 0.22 150);
-  --primary-foreground: oklch(0.14 0.01 260);
-  --secondary: oklch(0.25 0.02 150);
-  --secondary-foreground: oklch(0.96 0.005 120);
-  --muted: oklch(0.22 0.01 260);
-  --muted-foreground: oklch(0.65 0.01 120);
-  --accent: oklch(0.3 0.04 80);
-  --accent-foreground: oklch(0.96 0.005 120);
+  --background: oklch(0.14 0.03 300);
+  --foreground: oklch(0.96 0.01 300);
+  --card: oklch(0.19 0.04 300);
+  --card-foreground: oklch(0.96 0.01 300);
+  --popover: oklch(0.19 0.04 300);
+  --popover-foreground: oklch(0.96 0.01 300);
+  --primary: oklch(0.78 0.18 80);
+  --primary-foreground: oklch(0.14 0.03 300);
+  --secondary: oklch(0.25 0.04 300);
+  --secondary-foreground: oklch(0.96 0.01 300);
+  --muted: oklch(0.22 0.03 300);
+  --muted-foreground: oklch(0.65 0.02 300);
+  --accent: oklch(0.3 0.05 300);
+  --accent-foreground: oklch(0.96 0.01 300);
   --destructive: oklch(0.65 0.22 25);
-  --border: oklch(0.28 0.01 260);
-  --input: oklch(0.28 0.01 260);
-  --ring: oklch(0.6 0.22 150);
+  --border: oklch(0.28 0.03 300);
+  --input: oklch(0.28 0.03 300);
+  --ring: oklch(0.78 0.18 80);
+  --deal-gold: oklch(0.78 0.18 80);
+  --deal-purple: oklch(0.35 0.2 330);
 }
 
 @layer base {
@@ -118,7 +124,7 @@
   font-family: 'Cairo', sans-serif;
 }
 
-/* 3D Box Buttons - أزرار صندوقية ثلاثية الأبعاد */
+/* 3D Box Buttons - Gold Shiny Style أزرار صندوقية ثلاثية الأبعاد ذهبية */
 .btn-3d {
   position: relative;
   display: inline-flex;
@@ -137,35 +143,36 @@
 }
 
 .btn-3d-primary {
-  background: linear-gradient(180deg, #2ecc71 0%, #27ae60 100%);
-  color: white;
-  border-color: #219a52;
-  box-shadow: 0 4px 0 0 #1e8449, 0 6px 12px rgba(0,0,0,0.15);
+  background: linear-gradient(180deg, #FFD700 0%, #DAA520 50%, #B8860B 100%);
+  color: #2D1B00;
+  border-color: #B8860B;
+  box-shadow: 0 4px 0 0 #996515, 0 6px 12px rgba(184,134,11,0.3);
+  text-shadow: 0 1px 0 rgba(255,215,0,0.4);
 }
 .btn-3d-primary:hover {
-  background: linear-gradient(180deg, #27ae60 0%, #229954 100%);
-  box-shadow: 0 3px 0 0 #1e8449, 0 5px 10px rgba(0,0,0,0.15);
+  background: linear-gradient(180deg, #FFE033 0%, #E6B800 50%, #C49000 100%);
+  box-shadow: 0 3px 0 0 #996515, 0 5px 10px rgba(184,134,11,0.3);
   transform: translateY(1px);
 }
 .btn-3d-primary:active {
-  background: linear-gradient(180deg, #229954 0%, #1e8449 100%);
-  box-shadow: 0 1px 0 0 #1e8449, 0 2px 4px rgba(0,0,0,0.15);
+  background: linear-gradient(180deg, #DAA520 0%, #B8860B 50%, #996515 100%);
+  box-shadow: 0 1px 0 0 #996515, 0 2px 4px rgba(184,134,11,0.3);
   transform: translateY(3px);
 }
 
 .btn-3d-secondary {
-  background: linear-gradient(180deg, #f39c12 0%, #e67e22 100%);
+  background: linear-gradient(180deg, #9B59B6 0%, #8E44AD 50%, #6C3483 100%);
   color: white;
-  border-color: #d35400;
-  box-shadow: 0 4px 0 0 #a04000, 0 6px 12px rgba(0,0,0,0.15);
+  border-color: #6C3483;
+  box-shadow: 0 4px 0 0 #5B2C6F, 0 6px 12px rgba(108,52,131,0.3);
 }
 .btn-3d-secondary:hover {
-  background: linear-gradient(180deg, #e67e22 0%, #d35400 100%);
-  box-shadow: 0 3px 0 0 #a04000, 0 5px 10px rgba(0,0,0,0.15);
+  background: linear-gradient(180deg, #A569BD 0%, #9B59B6 50%, #7D3C98 100%);
+  box-shadow: 0 3px 0 0 #5B2C6F, 0 5px 10px rgba(108,52,131,0.3);
   transform: translateY(1px);
 }
 .btn-3d-secondary:active {
-  box-shadow: 0 1px 0 0 #a04000, 0 2px 4px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 0 0 #5B2C6F, 0 2px 4px rgba(108,52,131,0.3);
   transform: translateY(3px);
 }
 
@@ -187,17 +194,17 @@
 
 .btn-3d-outline {
   background: white;
-  color: #27ae60;
-  border-color: #27ae60;
-  box-shadow: 0 4px 0 0 #27ae60, 0 6px 12px rgba(0,0,0,0.1);
+  color: #B8860B;
+  border-color: #DAA520;
+  box-shadow: 0 4px 0 0 #DAA520, 0 6px 12px rgba(218,165,32,0.15);
 }
 .btn-3d-outline:hover {
-  background: #f0fdf4;
-  box-shadow: 0 3px 0 0 #27ae60, 0 5px 10px rgba(0,0,0,0.1);
+  background: #FFFBEB;
+  box-shadow: 0 3px 0 0 #DAA520, 0 5px 10px rgba(218,165,32,0.15);
   transform: translateY(1px);
 }
 .btn-3d-outline:active {
-  box-shadow: 0 1px 0 0 #27ae60, 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 0 0 #DAA520, 0 2px 4px rgba(218,165,32,0.15);
   transform: translateY(3px);
 }
 
@@ -206,12 +213,12 @@
   border-radius: 1rem;
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid oklch(0.91 0.01 120);
+  border: 1px solid oklch(0.9 0.02 300);
   background: white;
 }
 .deal-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+  box-shadow: 0 12px 24px rgba(108,52,131,0.12);
 }
 
 /* Stock indicator */
@@ -220,7 +227,7 @@
 .stock-red { color: #e74c3c; }
 
 /* Star ratings */
-.star-filled { color: #f1c40f; }
+.star-filled { color: #FFD700; }
 .star-empty { color: #d5d8dc; }
 
 /* Status badges */
@@ -232,8 +239,8 @@
 
 /* Commission calculator highlight */
 .commission-highlight {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border: 2px solid #86efac;
+  background: linear-gradient(135deg, #F5F0FF 0%, #E8D5F5 50%, #D4A8E8 100%);
+  border: 2px solid #9B59B6;
   border-radius: 1rem;
   padding: 1.5rem;
 }
@@ -257,11 +264,11 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.8 0.01 120);
+  background: oklch(0.8 0.02 300);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.65 0.02 120);
+  background: oklch(0.65 0.04 300);
 }
 
 /* Animations */
@@ -270,8 +277,12 @@
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(46, 204, 113, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(218,165,32,0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(218,165,32,0); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 .animate-fade-in-up {
   animation: fadeInUp 0.5s ease-out;
@@ -279,20 +290,70 @@
 .animate-pulse-glow {
   animation: pulse-glow 2s infinite;
 }
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,215,0,0.15) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
 
 /* RTL-specific adjustments */
 [dir="rtl"] .flip-rtl {
   transform: scaleX(-1);
 }
 
-/* Hero gradient */
+/* Hero gradient - Dark purple-red */
 .hero-gradient {
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 30%, #1abc9c 70%, #16a085 100%);
+  background: linear-gradient(135deg, #4A0E2E 0%, #6B1D45 25%, #7B2D55 50%, #5C1A3A 75%, #3D0C24 100%);
+  position: relative;
+}
+.hero-gradient::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 50%, rgba(218,165,32,0.15) 0%, transparent 70%),
+              radial-gradient(ellipse at 70% 30%, rgba(155,89,182,0.2) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 /* Glass effect */
 .glass {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Gold text shimmer */
+.gold-shimmer {
+  background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700, #DAA520, #FFD700);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 3s linear infinite;
+}
+
+/* Purple-red background for sections */
+.bg-deal-dark {
+  background: linear-gradient(135deg, #4A0E2E 0%, #5C1A3A 50%, #3D0C24 100%);
+}
+
+/* Message bubble */
+.msg-bubble-sent {
+  background: linear-gradient(135deg, #6B1D45, #7B2D55);
+  color: white;
+  border-radius: 1rem 1rem 0.25rem 1rem;
+}
+.msg-bubble-received {
+  background: #f3f0f5;
+  color: #333;
+  border-radius: 1rem 1rem 1rem 0.25rem;
+}
+
+/* Review stars animation */
+.review-star {
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.review-star:hover {
+  transform: scale(1.3);
 }

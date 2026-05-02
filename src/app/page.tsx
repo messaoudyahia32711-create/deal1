@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useAppStore } from '@/lib/store'
 import Header from '@/components/deal/Header'
 import Footer from '@/components/deal/Footer'
@@ -9,9 +10,17 @@ import MerchantDashboard from '@/components/deal/MerchantDashboard'
 import ProviderDashboard from '@/components/deal/ProviderDashboard'
 import CustomerDashboard from '@/components/deal/CustomerDashboard'
 import AdminDashboard from '@/components/deal/AdminDashboard'
+import ProductDetailModal from '@/components/deal/ProductDetailModal'
+import ServiceDetailModal from '@/components/deal/ServiceDetailModal'
 
 export default function DealPlatform() {
-  const { currentView } = useAppStore()
+  const { currentView, language, selectedProduct, selectedService } = useAppStore()
+
+  // Handle RTL/LTR switching
+  useEffect(() => {
+    document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'
+    document.documentElement.lang = language
+  }, [language])
 
   function renderView() {
     switch (currentView) {
@@ -39,6 +48,10 @@ export default function DealPlatform() {
         {renderView()}
       </main>
       {currentView === 'home' && <Footer />}
+      
+      {/* Detail Modals */}
+      {selectedProduct && <ProductDetailModal />}
+      {selectedService && <ServiceDetailModal />}
     </div>
   )
 }

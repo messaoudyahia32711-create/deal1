@@ -1,0 +1,402 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { useAppStore, type Service, type Review } from '@/lib/store'
+import { t, formatPrice } from '@/lib/i18n'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
+import { Textarea } from '@/components/ui/textarea'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+  Star,
+  Calendar,
+  MapPin,
+  Award,
+  Briefcase,
+  Clock,
+  Send,
+} from 'lucide-react'
+
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  )
+}
+
+// Service emoji map based on category name
+function getServiceEmoji(categoryName?: string): string {
+  if (!categoryName) return '🛠️'
+  const map: Record<string, string> = {
+    'سباكة': '🔧',
+    'كهرباء': '⚡',
+    'تكييف': '❄️',
+    'نجارة': '🪚',
+    'دهان': '🎨',
+    'نقل': '🚚',
+    'تنظيف': '🧹',
+    'Plomberie': '🔧',
+    'Électricité': '⚡',
+    'Climatisation': '❄️',
+    'Menuiserie': '🪚',
+    'Peinture': '🎨',
+    'Transport': '🚚',
+    'Nettoyage': '🧹',
+  }
+  return map[categoryName] || '🛠️'
+}
+
+function getPriceTypeLabel(priceType: string, language: 'ar' | 'fr'): string {
+  switch (priceType) {
+    case 'fixed': return t('fixed', language)
+    case 'hourly': return t('hourly', language)
+    case 'negotiable': return t('negotiable', language)
+    default: return priceType
+  }
+}
+
+export default function ServiceDetailModal() {
+  const { selectedService, setSelectedService, language, user, setCurrentView } = useAppStore()
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [reviewSummary, setReviewSummary] = useState({ avgRating: 0, totalReviews: 0 })
+  const [newRating, setNewRating] = useState(0)
+  const [newComment, setNewComment] = useState('')
+  const [hoverRating, setHoverRating] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
+
+  const service: Service | null = selectedService
+
+  const loadReviews = useCallback(async () => {
+    if (!service) return
+    try {
+      const res = await fetch(`/api/reviews?targetId=${service.id}&targetType=service&limit=20`)
+      const data = await res.json()
+      if (data.data) {
+        setReviews(
+          data.data.map((r: any) => ({
+            id: r.id,
+            reviewerId: r.reviewerId,
+            targetId: r.targetId,
+            targetType: r.targetType,
+            rating: r.rating,
+            comment: r.comment || undefined,
+            images: r.images || [],
+            createdAt: r.createdAt,
+            reviewerName: r.reviewer?.username || '',
+            reviewerAvatar: r.reviewer?.avatar || undefined,
+          }))
+        )
+      }
+      if (data.summary) {
+        setReviewSummary(data.summary)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }, [service])
+
+  useEffect(() => {
+    if (service) {
+      loadReviews()
+      setNewRating(0)
+      setNewComment('')
+    }
+  }, [service, loadReviews])
+
+  function handleClose() {
+    setSelectedService(null)
+  }
+
+  async function handleSubmitReview() {
+    if (!user || !service || newRating === 0) return
+    setSubmitting(true)
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reviewerId: user.id,
+          targetId: service.id,
+          targetType: 'service',
+          rating: newRating,
+          comment: newComment,
+        }),
+      })
+      if (res.ok) {
+        setNewRating(0)
+        setNewComment('')
+        loadReviews()
+      }
+    } catch (e) {
+      console.error(e)
+    }
+    setSubmitting(false)
+  }
+
+  function handleBookNow() {
+    if (!user) {
+      setCurrentView('auth')
+      handleClose()
+    }
+    // If logged in, could navigate to booking page
+    // For now, just show a toast or do nothing extra
+  }
+
+  function renderStars(rating: number, size: string = 'w-4 h-4') {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`${size} ${i < Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+      />
+    ))
+  }
+
+  if (!service) return null
+
+  const displayRating = reviewSummary.avgRating || service.rating || 0
+  const displayReviewCount = reviewSummary.totalReviews || service.reviewCount || 0
+  const emoji = getServiceEmoji(service.categoryName)
+
+  return (
+    <Dialog open={!!service} onOpenChange={(open) => { if (!open) handleClose() }}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0" showCloseButton={false}>
+        <DialogTitle className="sr-only">{service.title}</DialogTitle>
+
+        {/* Close Button */}
+        <button
+          onClick={handleClose}
+          className="absolute top-3 left-3 z-50 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition"
+        >
+          <XIcon className="w-4 h-4" />
+        </button>
+
+        {/* Header with Icon */}
+        <div className="bg-gradient-to-br from-purple-600 to-purple-900 p-6 text-white relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-5 right-5 w-32 h-32 bg-white rounded-full blur-3xl" />
+            <div className="absolute bottom-5 left-5 w-24 h-24 bg-yellow-300 rounded-full blur-2xl" />
+          </div>
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl shadow-lg">
+              {emoji}
+            </div>
+            <div className="flex-1 min-w-0">
+              {service.categoryName && (
+                <Badge className="bg-white/20 text-white text-xs mb-1 border-0">{service.categoryName}</Badge>
+              )}
+              <h2 className="text-xl font-black leading-tight mb-1">{service.title}</h2>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-0.5">{renderStars(displayRating, 'w-3.5 h-3.5')}</div>
+                <span className="text-sm font-bold">{displayRating.toFixed(1)}</span>
+                <span className="text-xs opacity-70">({displayReviewCount} {t('reviews', language)})</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-5">
+          {/* Description */}
+          {service.description && (
+            <p className="text-sm text-gray-600 mb-4 leading-relaxed">{service.description}</p>
+          )}
+
+          {/* Price Section */}
+          <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 mb-4 border border-yellow-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs text-gray-500 font-bold block mb-0.5">
+                  {getPriceTypeLabel(service.priceType, language)}
+                </span>
+                {service.price ? (
+                  <span className="text-2xl font-black text-yellow-700">{formatPrice(service.price, language)}</span>
+                ) : (
+                  <span className="text-lg font-bold text-yellow-700">{t('negotiable', language)}</span>
+                )}
+              </div>
+              <div className="text-left">
+                <Badge className="bg-purple-100 text-purple-700 border-0">
+                  <Clock className="w-3 h-3 ml-1" />
+                  {getPriceTypeLabel(service.priceType, language)}
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Provider Info */}
+          {service.provider && (
+            <div className="bg-gray-50 rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600">
+                  <AvatarFallback className="bg-transparent text-white font-bold">
+                    {service.provider.username?.[0] || 'م'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-sm">{service.provider.username}</span>
+                    {service.provider.isVerified && (
+                      <Award className="w-4 h-4 text-blue-500 fill-blue-500" />
+                    )}
+                  </div>
+                  {service.provider.specialty && (
+                    <p className="text-xs text-gray-500">{service.provider.specialty}</p>
+                  )}
+                  <div className="flex items-center gap-3 mt-1">
+                    {service.provider.experience && (
+                      <span className="text-xs text-gray-400 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {service.provider.experience} {t('experience', language)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="bg-blue-50 rounded-xl p-3 text-center border border-blue-100">
+              <Briefcase className="w-5 h-5 mx-auto text-blue-500 mb-1" />
+              <div className="font-black text-lg text-blue-700">{service.completedProjects}</div>
+              <div className="text-xs text-blue-500">{t('completedProjects', language)}</div>
+            </div>
+            <div className="bg-yellow-50 rounded-xl p-3 text-center border border-yellow-100">
+              <Star className="w-5 h-5 mx-auto text-yellow-500 fill-yellow-500 mb-1" />
+              <div className="font-black text-lg text-yellow-700">{displayRating.toFixed(1)}</div>
+              <div className="text-xs text-yellow-500">{t('rating', language)}</div>
+            </div>
+          </div>
+
+          {/* Coverage Wilayas */}
+          {service.coverageWilayas && service.coverageWilayas.length > 0 && (
+            <div className="mb-4">
+              <h4 className="font-bold text-xs mb-2 flex items-center gap-1.5 text-gray-600">
+                <MapPin className="w-3.5 h-3.5" />
+                {t('coverageWilayas', language)}
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
+                {service.coverageWilayas.map((w, i) => (
+                  <Badge key={i} variant="outline" className="text-xs border-purple-200 text-purple-700 bg-purple-50">
+                    {w}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Book Now Button */}
+          <button
+            className="btn-3d btn-3d-primary w-full text-lg mb-4"
+            onClick={handleBookNow}
+          >
+            <Calendar className="w-5 h-5" />
+            {t('bookNow', language)}
+          </button>
+
+          {/* Divider */}
+          <div className="border-t my-2" />
+
+          {/* Reviews Section */}
+          <div className="max-h-64 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+            <h3 className="font-bold text-sm mb-3 flex items-center gap-2">
+              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+              {t('reviews', language)} ({displayReviewCount})
+            </h3>
+
+            {reviews.length === 0 ? (
+              <p className="text-sm text-gray-400 text-center py-4">{t('noReviews', language)}</p>
+            ) : (
+              <div className="space-y-3">
+                {reviews.map((review) => (
+                  <div key={review.id} className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Avatar className="w-7 h-7">
+                        <AvatarFallback className="text-xs font-bold bg-purple-100 text-purple-700">
+                          {review.reviewerName?.[0] || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="font-bold text-xs">{review.reviewerName}</span>
+                      <div className="flex items-center gap-0.5 mr-auto">
+                        {renderStars(review.rating, 'w-3 h-3')}
+                      </div>
+                      <span className="text-[10px] text-gray-400">
+                        {new Date(review.createdAt).toLocaleDateString(language === 'ar' ? 'ar-DZ' : 'fr-FR')}
+                      </span>
+                    </div>
+                    {review.comment && (
+                      <p className="text-xs text-gray-600 leading-relaxed mt-1">{review.comment}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Add Review Form */}
+          {user && (
+            <div className="border-t pt-3 mt-3">
+              <h4 className="font-bold text-xs mb-2">{t('addReview', language)}</h4>
+              {/* Star Selector */}
+              <div className="flex items-center gap-1 mb-2">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <button
+                    key={i}
+                    className="review-star"
+                    onClick={() => setNewRating(i + 1)}
+                    onMouseEnter={() => setHoverRating(i + 1)}
+                    onMouseLeave={() => setHoverRating(0)}
+                  >
+                    <Star
+                      className={`w-6 h-6 transition ${
+                        i < (hoverRating || newRating)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+                {newRating > 0 && (
+                  <span className="text-xs text-gray-500 mr-1">{newRating}/5</span>
+                )}
+              </div>
+              {/* Comment */}
+              <Textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder={t('comment', language) + '...'}
+                className="text-sm min-h-[60px] mb-2 resize-none"
+                dir={language === 'ar' ? 'rtl' : 'ltr'}
+              />
+              <button
+                className="btn-3d btn-3d-primary text-sm py-2 w-full"
+                onClick={handleSubmitReview}
+                disabled={newRating === 0 || submitting}
+              >
+                <Send className="w-4 h-4" />
+                {t('submitReview', language)}
+              </button>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
