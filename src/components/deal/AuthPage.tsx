@@ -137,7 +137,7 @@ export default function AuthPage() {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black mb-2">
             <span className="gold-shimmer">DEAL</span>
-            <span className="text-2xl ml-2">🤝</span>
+            <img src="/deal-logo-nobg.png" alt="" className="h-8 w-auto inline-block ml-2 align-middle" />
           </h1>
           <p className="text-white/70 text-sm">
             {language === 'ar' ? 'منصة التجارة والخدمات الجزائرية' : 'Plateforme de commerce et services algérienne'}

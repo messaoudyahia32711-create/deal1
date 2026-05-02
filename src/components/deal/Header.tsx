@@ -201,12 +201,7 @@ export default function Header() {
                 onClick={() => handleNavClick('home', 'all')}
                 className="flex items-center gap-2 hover:opacity-80 transition-opacity"
               >
-                <span className="text-2xl sm:text-3xl font-black tracking-tight gold-shimmer">
-                  DEAL
-                </span>
-                <span className="text-2xl" role="img" aria-label="handshake">
-                  🤝
-                </span>
+                <img src="/deal-logo-nobg.png" alt="DEAL Logo" className="h-10 sm:h-12 w-auto" />
               </button>
             </div>
 
@@ -376,8 +371,7 @@ export default function Header() {
                 <SheetContent side={language === 'ar' ? 'right' : 'left'} className="w-[300px] sm:w-[350px]">
                   <SheetHeader>
                     <SheetTitle className={`flex items-center gap-2 ${language === 'ar' ? 'text-right' : 'text-left'}`}>
-                      <span className="text-2xl font-black gold-shimmer">DEAL</span>
-                      <span className="text-xl">🤝</span>
+                      <img src="/deal-logo-nobg.png" alt="DEAL Logo" className="h-8 w-auto" />
                     </SheetTitle>
                   </SheetHeader>
 

@@ -35,8 +35,7 @@ export default function Footer() {
           {/* Logo & Description */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2 mb-4">
-              <span className="text-3xl font-black gold-shimmer">DEAL</span>
-              <span className="text-2xl" role="img" aria-label="handshake">🤝</span>
+              <img src="/deal-logo-nobg.png" alt="DEAL Logo" className="h-12 w-auto" />
             </div>
             <p className="text-sm text-white/70 leading-relaxed max-w-xs">
               {language === 'ar'
