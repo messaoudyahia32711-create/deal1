@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useAppStore, type Product, type Service, type Category, WILAYAS } from '@/lib/store'
+import { useAppStore, type Product, type Service, type Category, WILAYAS, WILAYAS_FR } from '@/lib/store'
 import { t, formatPrice } from '@/lib/i18n'
-import { Search, SlidersHorizontal, MapPin, Star, ShoppingCart, Calendar, ChevronLeft, ChevronRight, Package, Wrench, TrendingUp, Users, Award, Zap } from 'lucide-react'
+import { Search, SlidersHorizontal, MapPin, Star, ShoppingCart, Calendar, ChevronLeft, ChevronRight, Package, Wrench, TrendingUp, Users, Award, Zap, Globe } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -76,7 +76,7 @@ export default function HomePage() {
   const [products, setProducts] = useState<Product[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [stats, setStats] = useState({ merchants: 0, services: 0, deals: 0 })
+  const [stats, setStats] = useState({ merchants: 0, services: 0, deals: 0, products: 0, users: 0, wilayas: 58 })
   const [loading, setLoading] = useState(true)
   const [productPage, setProductPage] = useState(1)
   const [servicePage, setServicePage] = useState(1)
@@ -100,9 +100,12 @@ export default function HomePage() {
       setCategories(catData.data || [])
       if (statsData.data) {
         setStats({
-          merchants: statsData.data.usersByRole?.merchant || 0,
-          services: statsData.data.totalServices || 0,
-          deals: statsData.data.totalOrders || 0,
+          merchants: statsData.data.users?.merchants || 0,
+          services: statsData.data.services?.active || 0,
+          deals: statsData.data.orders?.total || 0,
+          products: statsData.data.products?.active || 0,
+          users: statsData.data.users?.total || 0,
+          wilayas: 58,
         })
       }
     } catch (e) {
@@ -142,18 +145,30 @@ export default function HomePage() {
           <p className="text-lg md:text-xl opacity-80 mb-8">{t('appDescription', language)}</p>
 
           {/* Animated Stats */}
-          <div className="flex justify-center gap-4 md:gap-8 mb-8 flex-wrap">
+          <div className="flex justify-center gap-3 md:gap-6 mb-8 flex-wrap">
+            <StatCounter
+              value={stats.wilayas}
+              label={language === 'ar' ? 'ولاية' : 'Wilayas'}
+              icon={<Globe className="w-5 h-5 text-yellow-300" />}
+              delay={0}
+            />
             <StatCounter
               value={stats.merchants}
               label={t('merchant', language)}
               icon={<Award className="w-5 h-5 text-yellow-300" />}
-              delay={0}
+              delay={100}
+            />
+            <StatCounter
+              value={stats.products}
+              label={t('products', language)}
+              icon={<Package className="w-5 h-5 text-yellow-300" />}
+              delay={200}
             />
             <StatCounter
               value={stats.services}
               label={t('services', language)}
               icon={<Wrench className="w-5 h-5 text-yellow-300" />}
-              delay={200}
+              delay={300}
             />
             <StatCounter
               value={stats.deals}
@@ -197,7 +212,7 @@ export default function HomePage() {
               </SelectTrigger>
               <SelectContent className="max-h-64">
                 <SelectItem value="all">{t('allWilayas', language)}</SelectItem>
-                {(language === 'ar' ? WILAYAS : WILAYAS).map((w, i) => (
+                {(language === 'ar' ? WILAYAS : WILAYAS_FR).map((w, i) => (
                   <SelectItem key={i} value={w}>{w}</SelectItem>
                 ))}
               </SelectContent>
@@ -349,7 +364,15 @@ export default function HomePage() {
                         </button>
                       </div>
                       {product.merchant?.storeName && (
-                        <p className="text-xs text-gray-400 mt-1 truncate">{product.merchant.storeName}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-gray-400 truncate">{product.merchant.storeName}</span>
+                          {product.merchant.wilaya && (
+                            <span className="text-[10px] text-purple-400 flex items-center gap-0.5 shrink-0">
+                              <MapPin className="w-2.5 h-2.5" />
+                              {product.merchant.wilaya}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </CardContent>
                   </Card>

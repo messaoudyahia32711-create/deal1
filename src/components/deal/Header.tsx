@@ -82,6 +82,27 @@ export default function Header() {
   const unreadCount = notifications.filter((n) => !n.isRead).length
   const cartItemCount = cart.length
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [headerStats, setHeaderStats] = useState({ merchants: 0, services: 0, users: 0 })
+
+  // Fetch dynamic stats for the stats bar
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/stats')
+        const data = await res.json()
+        if (data.data) {
+          setHeaderStats({
+            merchants: data.data.users?.merchants || 0,
+            services: data.data.services?.active || 0,
+            users: data.data.users?.total || 0,
+          })
+        }
+      } catch (e) {
+        // Keep default values
+      }
+    }
+    fetchStats()
+  }, [])
 
   // RTL/LTR switching
   useEffect(() => {
@@ -471,19 +492,19 @@ export default function Header() {
             <div className="w-px h-3 bg-white/20" />
             <div className="flex items-center gap-1.5 shrink-0">
               <Store className="size-3.5 text-amber-400" />
-              <span className="font-bold text-amber-400">250+</span>
+              <span className="font-bold text-amber-400">{headerStats.merchants}+</span>
               <span>{language === 'ar' ? 'تاجر' : 'Marchands'}</span>
             </div>
             <div className="w-px h-3 bg-white/20" />
             <div className="flex items-center gap-1.5 shrink-0">
               <Sparkles className="size-3.5 text-amber-400" />
-              <span className="font-bold text-amber-400">120+</span>
+              <span className="font-bold text-amber-400">{headerStats.services}+</span>
               <span>{language === 'ar' ? 'خدمة' : 'Services'}</span>
             </div>
             <div className="w-px h-3 bg-white/20 hidden sm:block" />
             <div className="hidden sm:flex items-center gap-1.5 shrink-0">
               <Users className="size-3.5 text-amber-400" />
-              <span className="font-bold text-amber-400">10K+</span>
+              <span className="font-bold text-amber-400">{headerStats.users}+</span>
               <span>{language === 'ar' ? 'مستخدم' : 'Utilisateurs'}</span>
             </div>
           </div>

@@ -10,11 +10,9 @@ import MerchantDashboard from '@/components/deal/MerchantDashboard'
 import ProviderDashboard from '@/components/deal/ProviderDashboard'
 import CustomerDashboard from '@/components/deal/CustomerDashboard'
 import AdminDashboard from '@/components/deal/AdminDashboard'
-import ProductDetailModal from '@/components/deal/ProductDetailModal'
-import ServiceDetailModal from '@/components/deal/ServiceDetailModal'
 
 export default function DealPlatform() {
-  const { currentView, language, selectedProduct, selectedService } = useAppStore()
+  const { currentView, language } = useAppStore()
 
   // Handle RTL/LTR switching
   useEffect(() => {
@@ -47,11 +45,7 @@ export default function DealPlatform() {
       <main className="flex-1">
         {renderView()}
       </main>
-      {currentView === 'home' && <Footer />}
-      
-      {/* Detail Modals */}
-      {selectedProduct && <ProductDetailModal />}
-      {selectedService && <ServiceDetailModal />}
+      <Footer />
     </div>
   )
 }

@@ -393,3 +393,27 @@ Stage Summary:
 - All order status labels, booking status labels, priority labels are bilingual
 - RTL layout maintained
 - All existing functionality preserved (messaging, image upload, checkout, etc.)
+
+---
+Task ID: 5
+Agent: Main Agent - Bug Fixes & Enhancements
+Task: Fix bugs, improve dynamic stats, add wilaya display on cards, make footer always visible
+
+Work Log:
+- Fixed Wilaya dropdown bug in HomePage: was using WILAYAS for both Arabic and French, now correctly uses WILAYAS_FR for French mode
+- Fixed Footer visibility: removed condition `currentView === 'home'` so Footer is always visible and sticky at bottom across all views
+- Fixed duplicate modal rendering: removed ProductDetailModal and ServiceDetailModal from page.tsx since they're already rendered inside HomePage.tsx (was causing double modals)
+- Added wilaya/location display to product cards on homepage: shows store name with MapPin icon and wilaya name in purple
+- Enhanced dynamic stats in hero section: added 58 Wilayas counter (with Globe icon), products count, and reordered stats for better visual impact
+- Made Header stats bar dynamic: now fetches real data from /api/stats instead of hardcoded numbers (250+, 120+, 10K+)
+- Updated stats state to include products, users, and wilayas fields
+- All lint errors resolved (zero errors)
+- Dev server running successfully with 200 status
+- All API endpoints tested and working (auth, products, services, messages, reviews, categories, stats)
+
+Stage Summary:
+- Fixed 3 bugs: Wilaya dropdown French names, Footer always visible, duplicate modals
+- Product cards now show merchant wilaya/location
+- Dynamic stats in hero: 58 Wilayas, merchants, products, services, deals
+- Header stats bar uses real API data
+- All features from user request are implemented and working
