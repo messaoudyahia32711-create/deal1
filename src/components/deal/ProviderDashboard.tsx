@@ -32,8 +32,8 @@ export default function ProviderDashboard() {
   const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [categories, setCategories] = useState<{ id: string; nameAr: string }[]>([])
   const [newSvc, setNewSvc] = useState({ title: '', description: '', priceType: 'fixed', price: '', categoryId: '', coverageWilayas: '', availabilityDays: [] as string[] })
-  const [svcImage, setSvcImage] = useState<File | null>(null)
-  const [svcImagePreview, setSvcImagePreview] = useState<string | null>(null)
+  const [svcImages, setSvcImages] = useState<File[]>([])
+  const [svcImagePreviews, setSvcImagePreviews] = useState<string[]>([])
   const [uploadingSvc, setUploadingSvc] = useState(false)
   const isArabic = language === 'ar'
 
@@ -79,17 +79,19 @@ export default function ProviderDashboard() {
   async function handleAddService(e: React.FormEvent) {
     e.preventDefault()
     try {
-      let imageUrl = ''
+      const imageUrls: string[] = []
 
-      // Upload image if selected
-      if (svcImage) {
+      // Upload images if selected
+      if (svcImages.length > 0) {
         setUploadingSvc(true)
-        const formData = new FormData()
-        formData.append('file', svcImage)
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
-        const uploadData = await uploadRes.json()
-        if (uploadData.data?.url) {
-          imageUrl = uploadData.data.url
+        for (const file of svcImages) {
+          const formData = new FormData()
+          formData.append('file', file)
+          const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
+          const uploadData = await uploadRes.json()
+          if (uploadData.data?.url) {
+            imageUrls.push(uploadData.data.url)
+          }
         }
         setUploadingSvc(false)
       }
@@ -110,15 +112,15 @@ export default function ProviderDashboard() {
           priceType: newSvc.priceType,
           price: parseFloat(newSvc.price) || null,
           categoryId: newSvc.categoryId,
-          images: JSON.stringify(imageUrl ? [imageUrl] : []),
+          images: JSON.stringify(imageUrls),
           availabilityDays: JSON.stringify(newSvc.availabilityDays),
           coverageWilayas: JSON.stringify(wilayaCodes),
         }),
       })
       setAddDialogOpen(false)
       setNewSvc({ title: '', description: '', priceType: 'fixed', price: '', categoryId: '', coverageWilayas: '', availabilityDays: [] })
-      setSvcImage(null)
-      setSvcImagePreview(null)
+      setSvcImages([])
+      setSvcImagePreviews([])
       loadData()
     } catch (e) {
       console.error(e)
@@ -126,13 +128,26 @@ export default function ProviderDashboard() {
   }
 
   function handleSvcImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !file.type.startsWith('image/')) return
-    if (file.size > 5 * 1024 * 1024) return
-    setSvcImage(file)
-    const reader = new FileReader()
-    reader.onload = (ev) => setSvcImagePreview(ev.target?.result as string)
-    reader.readAsDataURL(file)
+    const files = e.target.files
+    if (!files) return
+    const newFiles: File[] = []
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (!file.type.startsWith('image/')) continue
+      if (file.size > 5 * 1024 * 1024) continue
+      newFiles.push(file)
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        setSvcImagePreviews(prev => [...prev, ev.target?.result as string])
+      }
+      reader.readAsDataURL(file)
+    }
+    setSvcImages(prev => [...prev, ...newFiles])
+  }
+
+  function removeSvcImage(index: number) {
+    setSvcImages(prev => prev.filter((_, i) => i !== index))
+    setSvcImagePreviews(prev => prev.filter((_, i) => i !== index))
   }
 
   function toggleDay(day: string) {
@@ -280,28 +295,31 @@ export default function ProviderDashboard() {
                         ))}
                       </div>
                     </div>
-                    {/* Image Upload */}
+                    {/* Image Upload - Multiple */}
                     <div>
-                      <Label className="font-bold">{t('image', language)}</Label>
-                      <div className="mt-1">
-                        {svcImagePreview ? (
-                          <div className="relative inline-block">
-                            <img src={svcImagePreview} alt="" className="w-24 h-24 rounded-xl object-cover border-2 border-amber-200" />
-                            <button
-                              type="button"
-                              onClick={() => { setSvcImage(null); setSvcImagePreview(null) }}
-                              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
+                      <Label className="font-bold">{t('image', language)} ({isArabic ? 'يمكنك اختيار عدة صور' : 'Plusieurs photos possibles'})</Label>
+                      <div className="mt-1 space-y-2">
+                        {svcImagePreviews.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {svcImagePreviews.map((preview, idx) => (
+                              <div key={idx} className="relative">
+                                <img src={preview} alt="" className="w-20 h-20 rounded-xl object-cover border-2 border-amber-200" />
+                                <button
+                                  type="button"
+                                  onClick={() => removeSvcImage(idx)}
+                                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
                           </div>
-                        ) : (
-                          <label className="flex items-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition">
-                            <ImageIcon className="w-5 h-5 text-gray-400" />
-                            <span className="text-sm text-gray-500">{t('uploadImage', language)}</span>
-                            <input type="file" accept="image/*" className="hidden" onChange={handleSvcImageSelect} />
-                          </label>
                         )}
+                        <label className="flex items-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition">
+                          <ImageIcon className="w-5 h-5 text-gray-400" />
+                          <span className="text-sm text-gray-500">{t('uploadImage', language)}</span>
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={handleSvcImageSelect} />
+                        </label>
                       </div>
                     </div>
                     <button type="submit" disabled={uploadingSvc} className="btn-3d btn-3d-primary w-full disabled:opacity-50">
@@ -311,22 +329,60 @@ export default function ProviderDashboard() {
                 </DialogContent>
               </Dialog>
             </div>
-            <div className="grid gap-3">
-              {services.map(svc => (
-                <Card key={svc.id} className="shadow-sm">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center text-xl">🛠️</div>
-                    <div className="flex-1">
-                      <h3 className="font-bold">{svc.title}</h3>
-                      <div className="flex gap-3 text-sm">
-                        <span className="text-gray-500">{svc.priceType === 'fixed' ? t('fixed', language) : svc.priceType === 'hourly' ? t('hourly', language) : t('negotiable', language)}</span>
-                        {svc.price && <span className="font-bold text-amber-600">{formatPrice(svc.price, language)}</span>}
+            <div className="grid gap-4">
+              {services.map(svc => {
+                const hasImage = svc.images && svc.images.length > 0
+                return (
+                  <Card key={svc.id} className="shadow-sm hover:shadow-md transition overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="flex">
+                        {/* Service Image */}
+                        <div className="w-28 h-28 md:w-36 md:h-36 shrink-0 bg-gradient-to-br from-purple-50 to-purple-100 overflow-hidden">
+                          {hasImage ? (
+                            <img src={svc.images[0]} alt={svc.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Wrench className="w-10 h-10 text-purple-300" />
+                            </div>
+                          )}
+                        </div>
+                        {/* Service Details */}
+                        <div className="flex-1 p-4 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h3 className="font-bold text-base truncate">{svc.title}</h3>
+                            <Badge className={svc.status === 'active' ? 'bg-green-100 text-green-700 shrink-0' : 'bg-gray-100 text-gray-600 shrink-0'}>
+                              {svc.status === 'active' ? (isArabic ? 'نشط' : 'Actif') : (isArabic ? 'مخفي' : 'Masqué')}
+                            </Badge>
+                          </div>
+                          {svc.description && (
+                            <p className="text-xs text-gray-400 line-clamp-1 mb-2">{svc.description}</p>
+                          )}
+                          <div className="flex items-center gap-3 text-sm mb-2">
+                            <Badge className="bg-purple-100 text-purple-700 text-[10px] px-1.5">
+                              {svc.priceType === 'fixed' ? t('fixed', language) : svc.priceType === 'hourly' ? t('hourly', language) : t('negotiable', language)}
+                            </Badge>
+                            {svc.price && <span className="font-black text-purple-600">{formatPrice(svc.price, language)}</span>}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {svc.completedProjects > 0 && (
+                                <span className="text-xs text-gray-400">✅ {svc.completedProjects} {isArabic ? 'مشروع' : 'projets'}</span>
+                              )}
+                              {hasImage && svc.images.length > 1 && (
+                                <span className="text-xs text-gray-400">📷 {svc.images.length}</span>
+                              )}
+                            </div>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost"><Edit className="w-4 h-4" /></Button>
+                              <Button size="sm" variant="ghost" className="text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <Badge className={svc.status === 'active' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}>{svc.status === 'active' ? (isArabic ? 'نشط' : 'Actif') : (isArabic ? 'مخفي' : 'Masqué')}</Badge>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           </TabsContent>
 

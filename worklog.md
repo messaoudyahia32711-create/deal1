@@ -417,3 +417,65 @@ Stage Summary:
 - Dynamic stats in hero: 58 Wilayas, merchants, products, services, deals
 - Header stats bar uses real API data
 - All features from user request are implemented and working
+
+---
+Task ID: 6
+Agent: Main Agent - Card Redesign & Dashboard Enhancement
+Task: Make product/service cards MUCH bigger with prominent image areas, show uploaded images in dashboard lists, support multiple image uploads, add on-sale toggle, make everything dynamic and linked to merchant/provider data
+
+Work Log:
+- Completely redesigned HomePage with much bigger, detailed cards
+  - Changed grid from 3-column to 2-column layout for much larger cards
+  - Created separate ProductCard and ServiceCard components with extensive detail
+  - Product cards now show: large 16:10 image area, category badge, stock status, title, description snippet, rating with stars, prominent price box (yellow bg), merchant info with avatar, contact button
+  - Service cards now show: large 16:10 image area, category + price type badges, title, description snippet, rating, stats row (completed projects + rating), coverage wilayas preview, provider info with avatar, contact button
+  - Added hover effects: gradient overlay, quick add-to-cart button appears on hover, favorite heart button
+  - Added image count indicator (📷 3 photos) when multiple images
+  - Better empty states with larger icons
+  - Improved section headers with subtext descriptions
+
+- Updated MerchantDashboard product list
+  - Products now show actual uploaded images instead of 📦 emoji placeholder
+  - Horizontal card layout with image on left, details on right
+  - Shows description snippet, sale price with discount, stock status, image count
+  - Multiple image upload support (accepts multiple files)
+  - Added on-sale toggle checkbox and sale price input
+  - Image previews grid with individual remove buttons
+
+- Updated ProviderDashboard service list
+  - Services now show actual uploaded images instead of 🛠️ emoji placeholder
+  - Horizontal card layout with image on left, details on right
+  - Shows description snippet, price type badge, price, completed projects count, image count
+  - Multiple image upload support (accepts multiple files)
+  - Image previews grid with individual remove buttons
+
+- Enhanced ProductDetailModal
+  - Larger modal (max-w-4xl instead of max-w-3xl)
+  - Larger image navigation buttons (w-10 h-10 instead of w-8 h-8)
+  - Added image counter (1/3) in top-right corner
+  - Larger thumbnails (w-16 h-16)
+  - Better no-image placeholder with subtext
+  - Larger star ratings (w-5 h-5)
+  - More prominent price section (text-3xl)
+  - Better stock status display
+  - Larger provider avatar (w-14 h-14)
+
+- Enhanced ServiceDetailModal
+  - Larger modal (max-w-4xl)
+  - Square image with better gradient overlay
+  - Image counter + thumbnails
+  - Better no-image placeholder with large emoji + subtext
+  - Larger provider avatar (w-14 h-14)
+  - More prominent stats (larger icons and text)
+
+- Zero lint errors confirmed
+- Dev server running successfully
+
+Stage Summary:
+- Cards are now 2x bigger with prominent image areas (16:10 aspect ratio)
+- All card details (images, descriptions, ratings, prices, stock) clearly visible and dynamic
+- Dashboard product/service lists show actual uploaded images instead of emoji placeholders
+- Multiple image upload support in both merchant and provider dashboards
+- Added on-sale toggle and sale price in merchant add-product form
+- Product/Service detail modals enhanced with larger images, better navigation
+- Everything dynamically linked to data merchants/providers fill in from their dashboards

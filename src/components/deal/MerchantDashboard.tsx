@@ -38,9 +38,9 @@ export default function MerchantDashboard() {
   const [categories, setCategories] = useState<{ id: string; nameAr: string }[]>([])
 
   // Add product form
-  const [newProd, setNewProd] = useState({ title: '', description: '', price: '', stock: '', categoryId: '' })
-  const [prodImage, setProdImage] = useState<File | null>(null)
-  const [prodImagePreview, setProdImagePreview] = useState<string | null>(null)
+  const [newProd, setNewProd] = useState({ title: '', description: '', price: '', stock: '', categoryId: '', isOnSale: false, salePrice: '' })
+  const [prodImages, setProdImages] = useState<File[]>([])
+  const [prodImagePreviews, setProdImagePreviews] = useState<string[]>([])
   const [uploadingProd, setUploadingProd] = useState(false)
 
   async function loadData() {
@@ -85,17 +85,19 @@ export default function MerchantDashboard() {
   async function handleAddProduct(e: React.FormEvent) {
     e.preventDefault()
     try {
-      let imageUrl = ''
+      const imageUrls: string[] = []
 
-      // Upload image if selected
-      if (prodImage) {
+      // Upload images if selected
+      if (prodImages.length > 0) {
         setUploadingProd(true)
-        const formData = new FormData()
-        formData.append('file', prodImage)
-        const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
-        const uploadData = await uploadRes.json()
-        if (uploadData.data?.url) {
-          imageUrl = uploadData.data.url
+        for (const file of prodImages) {
+          const formData = new FormData()
+          formData.append('file', file)
+          const uploadRes = await fetch('/api/upload', { method: 'POST', body: formData })
+          const uploadData = await uploadRes.json()
+          if (uploadData.data?.url) {
+            imageUrls.push(uploadData.data.url)
+          }
         }
         setUploadingProd(false)
       }
@@ -110,13 +112,15 @@ export default function MerchantDashboard() {
           price: parseFloat(newProd.price),
           stock: parseInt(newProd.stock),
           categoryId: newProd.categoryId,
-          images: JSON.stringify(imageUrl ? [imageUrl] : []),
+          images: JSON.stringify(imageUrls),
+          isOnSale: newProd.isOnSale,
+          salePrice: newProd.isOnSale && newProd.salePrice ? parseFloat(newProd.salePrice) : null,
         }),
       })
       setAddDialogOpen(false)
-      setNewProd({ title: '', description: '', price: '', stock: '', categoryId: '' })
-      setProdImage(null)
-      setProdImagePreview(null)
+      setNewProd({ title: '', description: '', price: '', stock: '', categoryId: '', isOnSale: false, salePrice: '' })
+      setProdImages([])
+      setProdImagePreviews([])
       loadData()
     } catch (e) {
       console.error(e)
@@ -124,13 +128,27 @@ export default function MerchantDashboard() {
   }
 
   function handleProdImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file || !file.type.startsWith('image/')) return
-    if (file.size > 5 * 1024 * 1024) return
-    setProdImage(file)
-    const reader = new FileReader()
-    reader.onload = (ev) => setProdImagePreview(ev.target?.result as string)
-    reader.readAsDataURL(file)
+    const files = e.target.files
+    if (!files) return
+    const newFiles: File[] = []
+    const newPreviews: string[] = []
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (!file.type.startsWith('image/')) continue
+      if (file.size > 5 * 1024 * 1024) continue
+      newFiles.push(file)
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        setProdImagePreviews(prev => [...prev, ev.target?.result as string])
+      }
+      reader.readAsDataURL(file)
+    }
+    setProdImages(prev => [...prev, ...newFiles])
+  }
+
+  function removeProdImage(index: number) {
+    setProdImages(prev => prev.filter((_, i) => i !== index))
+    setProdImagePreviews(prev => prev.filter((_, i) => i !== index))
   }
 
   async function updateOrderStatus(orderId: string, status: string) {
@@ -259,30 +277,53 @@ export default function MerchantDashboard() {
                         <SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.nameAr}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
-                    {/* Image Upload */}
+                    {/* Image Upload - Multiple */}
                     <div>
-                      <Label className="font-bold">{t('image', language)}</Label>
-                      <div className="mt-1">
-                        {prodImagePreview ? (
-                          <div className="relative inline-block">
-                            <img src={prodImagePreview} alt="" className="w-24 h-24 rounded-xl object-cover border-2 border-purple-200" />
-                            <button
-                              type="button"
-                              onClick={() => { setProdImage(null); setProdImagePreview(null) }}
-                              className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
+                      <Label className="font-bold">{t('image', language)} ({language === 'ar' ? 'يمكنك اختيار عدة صور' : 'Vous pouvez sélectionner plusieurs photos'})</Label>
+                      <div className="mt-1 space-y-2">
+                        {/* Image Previews */}
+                        {prodImagePreviews.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {prodImagePreviews.map((preview, idx) => (
+                              <div key={idx} className="relative">
+                                <img src={preview} alt="" className="w-20 h-20 rounded-xl object-cover border-2 border-purple-200" />
+                                <button
+                                  type="button"
+                                  onClick={() => removeProdImage(idx)}
+                                  className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
                           </div>
-                        ) : (
-                          <label className="flex items-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition">
-                            <ImageIcon className="w-5 h-5 text-gray-400" />
-                            <span className="text-sm text-gray-500">{t('uploadImage', language)}</span>
-                            <input type="file" accept="image/*" className="hidden" onChange={handleProdImageSelect} />
-                          </label>
                         )}
+                        {/* Upload button */}
+                        <label className="flex items-center gap-2 p-3 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-amber-400 hover:bg-amber-50/50 transition">
+                          <ImageIcon className="w-5 h-5 text-gray-400" />
+                          <span className="text-sm text-gray-500">{t('uploadImage', language)}</span>
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={handleProdImageSelect} />
+                        </label>
                       </div>
                     </div>
+                    {/* On Sale Toggle */}
+                    <div className="flex items-center gap-3">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newProd.isOnSale}
+                          onChange={e => setNewProd(p => ({ ...p, isOnSale: e.target.checked }))}
+                          className="w-4 h-4 accent-yellow-500"
+                        />
+                        <span className="font-bold text-sm">{t('onSale', language)}</span>
+                      </label>
+                    </div>
+                    {newProd.isOnSale && (
+                      <div>
+                        <Label className="font-bold">{language === 'ar' ? 'سعر التخفيض' : 'Prix promo'} ({t('currency', language)})</Label>
+                        <Input type="number" value={newProd.salePrice} onChange={e => setNewProd(p => ({ ...p, salePrice: e.target.value }))} className="rounded-xl" dir="ltr" />
+                      </div>
+                    )}
                     <button type="submit" disabled={uploadingProd} className="btn-3d btn-3d-primary w-full disabled:opacity-50">
                       {uploadingProd ? <Loader2 className="w-4 h-4 animate-spin inline" /> : t('addProduct', language)}
                     </button>
@@ -291,30 +332,65 @@ export default function MerchantDashboard() {
               </Dialog>
             </div>
 
-            <div className="grid gap-3">
-              {products.map(product => (
-                <Card key={product.id} className="shadow-sm">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center text-2xl shrink-0">📦</div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold truncate">{product.title}</h3>
-                      <div className="flex items-center gap-3 text-sm">
-                        <span className="font-bold text-amber-600">{formatPrice(product.price, language)}</span>
-                        <span className={`font-bold ${product.stock > 10 ? 'stock-green' : product.stock > 0 ? 'stock-orange' : 'stock-red'}`}>
-                          {t('stock', language)}: {product.stock}
-                        </span>
+            <div className="grid gap-4">
+              {products.map(product => {
+                const hasImage = product.images && product.images.length > 0
+                return (
+                  <Card key={product.id} className="shadow-sm hover:shadow-md transition overflow-hidden">
+                    <CardContent className="p-0">
+                      <div className="flex">
+                        {/* Product Image */}
+                        <div className="w-28 h-28 md:w-36 md:h-36 shrink-0 bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+                          {hasImage ? (
+                            <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="w-10 h-10 text-gray-300" />
+                            </div>
+                          )}
+                        </div>
+                        {/* Product Details */}
+                        <div className="flex-1 p-4 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <h3 className="font-bold text-base truncate">{product.title}</h3>
+                            <Badge className={product.status === 'active' ? 'bg-green-100 text-green-700 shrink-0' : 'bg-gray-100 text-gray-600 shrink-0'}>
+                              {product.status === 'active' ? (language === 'ar' ? 'نشط' : 'Actif') : (language === 'ar' ? 'مخفي' : 'Masqué')}
+                            </Badge>
+                          </div>
+                          {product.description && (
+                            <p className="text-xs text-gray-400 line-clamp-1 mb-2">{product.description}</p>
+                          )}
+                          <div className="flex items-center gap-3 text-sm mb-2">
+                            {product.isOnSale && product.salePrice ? (
+                              <div className="flex items-center gap-2">
+                                <span className="font-black text-amber-600">{formatPrice(product.salePrice, language)}</span>
+                                <span className="text-xs text-gray-400 line-through">{formatPrice(product.price, language)}</span>
+                                <Badge className="bg-red-100 text-red-600 text-[10px] px-1.5">-{Math.round(((product.price - product.salePrice) / product.price) * 100)}%</Badge>
+                              </div>
+                            ) : (
+                              <span className="font-black text-amber-600">{formatPrice(product.price, language)}</span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <span className={`text-xs font-bold ${product.stock > 10 ? 'text-green-600' : product.stock > 0 ? 'text-orange-500' : 'text-red-500'}`}>
+                                {t('stock', language)}: {product.stock}
+                              </span>
+                              {hasImage && product.images.length > 1 && (
+                                <span className="text-xs text-gray-400">📷 {product.images.length}</span>
+                              )}
+                            </div>
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="ghost"><Edit className="w-4 h-4" /></Button>
+                              <Button size="sm" variant="ghost" className="text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                    <Badge className={product.status === 'active' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}>
-                      {product.status === 'active' ? (language === 'ar' ? 'نشط' : 'Actif') : (language === 'ar' ? 'مخفي' : 'Masqué')}
-                    </Badge>
-                    <div className="flex gap-1">
-                      <Button size="sm" variant="ghost"><Edit className="w-4 h-4" /></Button>
-                      <Button size="sm" variant="ghost" className="text-red-500"><Trash2 className="w-4 h-4" /></Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           </TabsContent>
 
