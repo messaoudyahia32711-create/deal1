@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { t, type Language } from '@/lib/i18n'
-import { type Message } from '@/lib/store'
+import { type Message, useAppStore } from '@/lib/store'
 import { Send, ArrowRight, Plus, Search, MessageCircle, Loader2, Image as ImageIcon, X } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -33,6 +33,7 @@ interface UserOption {
 }
 
 export default function MessagePanel({ userId, userRole, language }: MessagePanelProps) {
+  const { contactOwnerId, contactOwnerName, setContactOwner } = useAppStore()
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<Message[]>([])
   const [activePartner, setActivePartner] = useState<UserOption | null>(null)
@@ -49,6 +50,28 @@ export default function MessagePanel({ userId, userRole, language }: MessagePane
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const isArabic = language === 'ar'
+
+  // Auto-open conversation with contact owner
+  useEffect(() => {
+    if (contactOwnerId && contactOwnerName) {
+      const partner: UserOption = {
+        id: contactOwnerId,
+        username: contactOwnerName,
+        role: '',
+        avatar: null,
+      }
+      // Check if conversation already exists
+      const existing = conversations.find(c => c.partnerId === contactOwnerId)
+      if (existing) {
+        openConversation(existing.partnerId, existing.partnerName, existing.partnerAvatar)
+      } else {
+        setActivePartner(partner)
+        setMessages([])
+      }
+      // Clear contact owner state after opening
+      setContactOwner(null, null)
+    }
+  }, [contactOwnerId, contactOwnerName])
 
   // Load conversations
   async function loadConversations() {

@@ -124,7 +124,96 @@
   font-family: 'Cairo', sans-serif;
 }
 
-/* 3D Box Buttons - Gold Shiny Style أزرار صندوقية ثلاثية الأبعاد ذهبية */
+/* ==================== DIM MODE - التضليل ==================== */
+.deal-dim {
+  --background: oklch(0.14 0.03 300);
+  --foreground: oklch(0.92 0.01 300);
+  --card: oklch(0.18 0.04 300);
+  --card-foreground: oklch(0.92 0.01 300);
+  --popover: oklch(0.18 0.04 300);
+  --popover-foreground: oklch(0.92 0.01 300);
+  --primary: oklch(0.78 0.18 80);
+  --primary-foreground: oklch(0.14 0.03 300);
+  --secondary: oklch(0.25 0.04 300);
+  --secondary-foreground: oklch(0.92 0.01 300);
+  --muted: oklch(0.22 0.03 300);
+  --muted-foreground: oklch(0.65 0.02 300);
+  --accent: oklch(0.3 0.05 300);
+  --accent-foreground: oklch(0.92 0.01 300);
+  --destructive: oklch(0.65 0.22 25);
+  --border: oklch(0.3 0.04 300);
+  --input: oklch(0.3 0.04 300);
+  --ring: oklch(0.78 0.18 80);
+}
+
+.deal-dim body {
+  background: oklch(0.14 0.03 300);
+  color: oklch(0.92 0.01 300);
+}
+
+.deal-dim .deal-card {
+  background: oklch(0.18 0.04 300);
+  border-color: oklch(0.3 0.04 300);
+}
+
+.deal-dim .deal-card:hover {
+  box-shadow: 0 12px 24px rgba(155, 89, 182, 0.2);
+}
+
+.deal-dim .bg-white {
+  background: oklch(0.18 0.04 300) !important;
+}
+
+.deal-dim .bg-gray-50,
+.deal-dim .bg-gray-50\/50 {
+  background: oklch(0.16 0.03 300) !important;
+}
+
+.deal-dim .bg-white\/95 {
+  background: rgba(30, 15, 40, 0.95) !important;
+}
+
+.deal-dim .bg-gray-100 {
+  background: oklch(0.2 0.03 300) !important;
+}
+
+.deal-dim .text-gray-600,
+.deal-dim .text-gray-500,
+.deal-dim .text-gray-400 {
+  color: oklch(0.7 0.02 300) !important;
+}
+
+.deal-dim .text-gray-300 {
+  color: oklch(0.5 0.02 300) !important;
+}
+
+.deal-dim .border-gray-100,
+.deal-dim .border-purple-100\/50 {
+  border-color: oklch(0.3 0.04 300) !important;
+}
+
+.deal-dim .border-b {
+  border-color: oklch(0.3 0.04 300) !important;
+}
+
+.deal-dim input,
+.deal-dim textarea,
+.deal-dim select {
+  background: oklch(0.2 0.03 300) !important;
+  color: oklch(0.9 0.01 300) !important;
+  border-color: oklch(0.35 0.04 300) !important;
+}
+
+.deal-dim .shadow-sm {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+.deal-dim .msg-bubble-received {
+  background: oklch(0.25 0.04 300);
+  color: oklch(0.9 0.01 300);
+}
+
+/* ==================== 3D Box Buttons - Gold Shiny Style ==================== */
 .btn-3d {
   position: relative;
   display: inline-flex;
@@ -284,6 +373,10 @@
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+@keyframes goldPulse {
+  0%, 100% { filter: brightness(1); }
+  50% { filter: brightness(1.3); }
+}
 .animate-fade-in-up {
   animation: fadeInUp 0.5s ease-out;
 }
@@ -322,7 +415,7 @@
   border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Gold text shimmer */
+/* Gold text shimmer - for DEAL title and tagline */
 .gold-shimmer {
   background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700, #DAA520, #FFD700);
   background-size: 200% auto;

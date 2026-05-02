@@ -18,6 +18,8 @@ import {
   Store,
   Users,
   Sparkles,
+  Moon,
+  Sun,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -77,6 +79,8 @@ export default function Header() {
     setFilterType,
     language,
     setLanguage,
+    isDimmed,
+    toggleDim,
   } = useAppStore()
 
   const unreadCount = notifications.filter((n) => !n.isRead).length
@@ -109,6 +113,15 @@ export default function Header() {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr'
     document.documentElement.lang = language
   }, [language])
+
+  // Apply dim mode class to body
+  useEffect(() => {
+    if (isDimmed) {
+      document.documentElement.classList.add('deal-dim')
+    } else {
+      document.documentElement.classList.remove('deal-dim')
+    }
+  }, [isDimmed])
 
   const handleNavClick = (view: 'home' | 'auth', filter?: 'all' | 'products' | 'services') => {
     setCurrentView(view)
@@ -217,6 +230,21 @@ export default function Header() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-2 sm:gap-3">
+              {/* Dim Mode Toggle */}
+              <button
+                onClick={toggleDim}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full border text-xs font-bold transition-all hover:shadow-sm ${
+                  isDimmed 
+                    ? 'bg-purple-900 border-purple-700 text-yellow-400 hover:bg-purple-800' 
+                    : 'bg-gray-50 border-gray-200/60 text-gray-600 hover:bg-gray-100'
+                }`}
+                aria-label={language === 'ar' ? (isDimmed ? 'الوضع العادي' : 'الوضع المضلل') : (isDimmed ? 'Mode normal' : 'Mode sombre')}
+                title={language === 'ar' ? (isDimmed ? 'الوضع العادي' : 'تضليل المنصة') : (isDimmed ? 'Mode normal' : 'Mode sombre')}
+              >
+                {isDimmed ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+                <span className="hidden sm:inline">{isDimmed ? (language === 'ar' ? 'عادي' : 'Normal') : (language === 'ar' ? 'تضليل' : 'Sombre')}</span>
+              </button>
+
               {/* Language Toggle */}
               <button
                 onClick={toggleLanguage}
@@ -354,6 +382,17 @@ export default function Header() {
                   </SheetHeader>
 
                   <div className="flex flex-col gap-2 px-4 mt-4">
+                    {/* Dim Mode in Mobile */}
+                    <button
+                      onClick={() => { toggleDim(); setMobileOpen(false) }}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                        isDimmed ? 'bg-purple-900 text-yellow-400' : 'text-muted-foreground hover:text-foreground hover:bg-purple-50/50'
+                      }`}
+                    >
+                      {isDimmed ? <Sun className="size-5" /> : <Moon className="size-5" />}
+                      {isDimmed ? (language === 'ar' ? 'الوضع العادي' : 'Mode normal') : (language === 'ar' ? 'تضليل المنصة' : 'Mode sombre')}
+                    </button>
+
                     {/* Language Toggle in Mobile */}
                     <button
                       onClick={toggleLanguage}

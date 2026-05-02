@@ -19,6 +19,9 @@ import {
   Briefcase,
   Clock,
   Send,
+  MessageCircle,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 
 function XIcon({ className }: { className?: string }) {
@@ -73,13 +76,14 @@ function getPriceTypeLabel(priceType: string, language: 'ar' | 'fr'): string {
 }
 
 export default function ServiceDetailModal() {
-  const { selectedService, setSelectedService, language, user, setCurrentView } = useAppStore()
+  const { selectedService, setSelectedService, language, user, setCurrentView, setContactOwner } = useAppStore()
   const [reviews, setReviews] = useState<Review[]>([])
-  const [reviewSummary, setReviewSummary] = useState({ avgRating: 0, totalReviews: 0 })
+  const [reviewSummary, setReviewSummary] = useState({ avgRating: 0, totalReviews: 0, distribution: [0, 0, 0, 0, 0] })
   const [newRating, setNewRating] = useState(0)
   const [newComment, setNewComment] = useState('')
   const [hoverRating, setHoverRating] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+  const [currentImageIdx, setCurrentImageIdx] = useState(0)
 
   const service: Service | null = selectedService
 
@@ -103,9 +107,26 @@ export default function ServiceDetailModal() {
             reviewerAvatar: r.reviewer?.avatar || undefined,
           }))
         )
+
+        // Algorithmic aggregation like major stores
+        const allRatings = data.data.map((r: any) => r.rating)
+        const totalReviews = allRatings.length
+        const avgRating = totalReviews > 0 ? allRatings.reduce((a: number, b: number) => a + b, 0) / totalReviews : 0
+        
+        // Calculate distribution
+        const distribution = [0, 0, 0, 0, 0]
+        allRatings.forEach((r: number) => {
+          if (r >= 1 && r <= 5) distribution[r - 1]++
+        })
+
+        setReviewSummary({ avgRating, totalReviews, distribution })
       }
       if (data.summary) {
-        setReviewSummary(data.summary)
+        setReviewSummary(prev => ({
+          ...prev,
+          avgRating: data.summary.avgRating || prev.avgRating,
+          totalReviews: data.summary.totalReviews || prev.totalReviews,
+        }))
       }
     } catch (e) {
       console.error(e)
@@ -117,6 +138,7 @@ export default function ServiceDetailModal() {
       loadReviews()
       setNewRating(0)
       setNewComment('')
+      setCurrentImageIdx(0)
     }
   }, [service, loadReviews])
 
@@ -156,7 +178,29 @@ export default function ServiceDetailModal() {
       handleClose()
     }
     // If logged in, could navigate to booking page
-    // For now, just show a toast or do nothing extra
+  }
+
+  function handleContactProvider() {
+    if (!service?.provider) return
+    if (!user) {
+      setCurrentView('auth')
+      handleClose()
+      return
+    }
+    const dashboardView = user.role === 'merchant' ? 'merchant-dashboard'
+      : user.role === 'service_provider' ? 'provider-dashboard'
+      : user.role === 'admin' ? 'admin-dashboard'
+      : 'customer-dashboard'
+    
+    setContactOwner(service.providerId, service.provider?.username || '')
+    setCurrentView(dashboardView)
+    handleClose()
+    
+    const store = useAppStore.getState()
+    if (user.role === 'merchant') store.setMerchantTab('chat')
+    else if (user.role === 'service_provider') store.setProviderTab('chat')
+    else if (user.role === 'customer') store.setCustomerTab('chat')
+    else if (user.role === 'admin') store.setAdminTab('chat')
   }
 
   function renderStars(rating: number, size: string = 'w-4 h-4') {
@@ -173,6 +217,7 @@ export default function ServiceDetailModal() {
   const displayRating = reviewSummary.avgRating || service.rating || 0
   const displayReviewCount = reviewSummary.totalReviews || service.reviewCount || 0
   const emoji = getServiceEmoji(service.categoryName)
+  const images = service.images && service.images.length > 0 ? service.images : []
 
   return (
     <Dialog open={!!service} onOpenChange={(open) => { if (!open) handleClose() }}>
@@ -187,28 +232,80 @@ export default function ServiceDetailModal() {
           <XIcon className="w-4 h-4" />
         </button>
 
-        {/* Header with Icon */}
-        <div className="bg-gradient-to-br from-purple-600 to-purple-900 p-6 text-white relative overflow-hidden">
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-5 right-5 w-32 h-32 bg-white rounded-full blur-3xl" />
-            <div className="absolute bottom-5 left-5 w-24 h-24 bg-yellow-300 rounded-full blur-2xl" />
-          </div>
-          <div className="relative z-10 flex items-center gap-4">
-            <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl shadow-lg">
-              {emoji}
-            </div>
-            <div className="flex-1 min-w-0">
-              {service.categoryName && (
-                <Badge className="bg-white/20 text-white text-xs mb-1 border-0">{service.categoryName}</Badge>
+        {/* Header with Image or Icon */}
+        <div className="relative overflow-hidden">
+          {images.length > 0 ? (
+            <div className="relative aspect-video">
+              <img
+                src={images[currentImageIdx]}
+                alt={service.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+              {/* Image Navigation */}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setCurrentImageIdx((prev) => (prev + 1) % images.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow z-10"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setCurrentImageIdx((prev) => (prev - 1 + images.length) % images.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow z-10"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                  {/* Dots */}
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+                    {images.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentImageIdx(i)}
+                        className={`w-2 h-2 rounded-full transition ${i === currentImageIdx ? 'bg-white w-4' : 'bg-white/50'}`}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
-              <h2 className="text-xl font-black leading-tight mb-1">{service.title}</h2>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-0.5">{renderStars(displayRating, 'w-3.5 h-3.5')}</div>
-                <span className="text-sm font-bold">{displayRating.toFixed(1)}</span>
-                <span className="text-xs opacity-70">({displayReviewCount} {t('reviews', language)})</span>
+              {/* Content overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-5 text-white z-10">
+                {service.categoryName && (
+                  <Badge className="bg-white/20 text-white text-xs mb-2 border-0 backdrop-blur-sm">{service.categoryName}</Badge>
+                )}
+                <h2 className="text-xl font-black leading-tight mb-1">{service.title}</h2>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-0.5">{renderStars(displayRating, 'w-3.5 h-3.5')}</div>
+                  <span className="text-sm font-bold">{displayRating.toFixed(1)}</span>
+                  <span className="text-xs opacity-70">({displayReviewCount} {t('reviews', language)})</span>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="bg-gradient-to-br from-purple-600 to-purple-900 p-6 text-white relative overflow-hidden">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-5 right-5 w-32 h-32 bg-white rounded-full blur-3xl" />
+                <div className="absolute bottom-5 left-5 w-24 h-24 bg-yellow-300 rounded-full blur-2xl" />
+              </div>
+              <div className="relative z-10 flex items-center gap-4">
+                <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-4xl shadow-lg">
+                  {emoji}
+                </div>
+                <div className="flex-1 min-w-0">
+                  {service.categoryName && (
+                    <Badge className="bg-white/20 text-white text-xs mb-1 border-0">{service.categoryName}</Badge>
+                  )}
+                  <h2 className="text-xl font-black leading-tight mb-1">{service.title}</h2>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-0.5">{renderStars(displayRating, 'w-3.5 h-3.5')}</div>
+                    <span className="text-sm font-bold">{displayRating.toFixed(1)}</span>
+                    <span className="text-xs opacity-70">({displayReviewCount} {t('reviews', language)})</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="p-5">
@@ -285,6 +382,27 @@ export default function ServiceDetailModal() {
             </div>
           </div>
 
+          {/* Rating Distribution */}
+          {displayReviewCount > 0 && (
+            <div className="mb-4 p-3 bg-gray-50 rounded-xl">
+              <h4 className="font-bold text-xs mb-2">{t('reviews', language)} - {language === 'ar' ? 'توزيع التقييمات' : 'Distribution des notes'}</h4>
+              {[5, 4, 3, 2, 1].map(star => {
+                const count = reviewSummary.distribution[star - 1]
+                const pct = displayReviewCount > 0 ? (count / displayReviewCount) * 100 : 0
+                return (
+                  <div key={star} className="flex items-center gap-1.5 text-[10px]">
+                    <span className="w-3 text-gray-500 font-bold">{star}</span>
+                    <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
+                    <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-yellow-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="w-5 text-gray-400 text-right">{count}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {/* Coverage Wilayas */}
           {service.coverageWilayas && service.coverageWilayas.length > 0 && (
             <div className="mb-4">
@@ -302,14 +420,23 @@ export default function ServiceDetailModal() {
             </div>
           )}
 
-          {/* Book Now Button */}
-          <button
-            className="btn-3d btn-3d-primary w-full text-lg mb-4"
-            onClick={handleBookNow}
-          >
-            <Calendar className="w-5 h-5" />
-            {t('bookNow', language)}
-          </button>
+          {/* Action Buttons */}
+          <div className="flex gap-3 mb-4">
+            <button
+              className="btn-3d btn-3d-primary flex-1 text-lg"
+              onClick={handleBookNow}
+            >
+              <Calendar className="w-5 h-5" />
+              {t('bookNow', language)}
+            </button>
+            <button
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white rounded-xl font-bold text-sm transition shadow-md hover:shadow-lg"
+              onClick={handleContactProvider}
+            >
+              <MessageCircle className="w-5 h-5" />
+              {language === 'ar' ? `تواصل مع ${service.provider?.username || 'مزود الخدمة'}` : `Contacter ${service.provider?.username || 'le prestataire'}`}
+            </button>
+          </div>
 
           {/* Divider */}
           <div className="border-t my-2" />

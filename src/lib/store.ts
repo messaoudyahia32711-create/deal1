@@ -234,6 +234,16 @@ interface AppStore {
   // Loading
   isLoading: boolean
   setIsLoading: (l: boolean) => void
+
+  // Dim mode
+  isDimmed: boolean
+  setIsDimmed: (d: boolean) => void
+  toggleDim: () => void
+
+  // Contact owner - opens messaging with a specific user
+  contactOwnerId: string | null
+  contactOwnerName: string | null
+  setContactOwner: (id: string | null, name: string | null) => void
 }
 
 export const useAppStore = create<AppStore>((set, get) => ({
@@ -333,6 +343,16 @@ export const useAppStore = create<AppStore>((set, get) => ({
   // Loading
   isLoading: false,
   setIsLoading: (l) => set({ isLoading: l }),
+
+  // Dim mode
+  isDimmed: false,
+  setIsDimmed: (d) => set({ isDimmed: d }),
+  toggleDim: () => set({ isDimmed: !get().isDimmed }),
+
+  // Contact owner
+  contactOwnerId: null,
+  contactOwnerName: null,
+  setContactOwner: (id, name) => set({ contactOwnerId: id, contactOwnerName: name }),
 }))
 
 // Algerian Wilayas - 58 wilayas (including the 2 new ones from 2019)

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore, type Product, type Service, type Category, WILAYAS, WILAYAS_FR } from '@/lib/store'
 import { t, formatPrice } from '@/lib/i18n'
-import { Search, SlidersHorizontal, MapPin, Star, ShoppingCart, Calendar, ChevronLeft, ChevronRight, Package, Wrench, TrendingUp, Users, Award, Zap, Globe } from 'lucide-react'
+import { Search, SlidersHorizontal, MapPin, Star, ShoppingCart, Calendar, ChevronLeft, ChevronRight, Package, Wrench, TrendingUp, Users, Award, Zap, Globe, MessageCircle, Eye } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -70,7 +70,7 @@ export default function HomePage() {
     sortBy, setSortBy,
     addToCart, user, setCurrentView,
     setSelectedProduct, setSelectedService,
-    language,
+    language, setContactOwner,
   } = useAppStore()
 
   const [products, setProducts] = useState<Product[]>([])
@@ -121,10 +121,33 @@ export default function HomePage() {
   const productCategories = categories.filter(c => c.type === 'product')
   const serviceCategories = categories.filter(c => c.type === 'service')
 
-  function renderStars(rating: number = 0) {
+  function renderStars(rating: number = 0, size: string = 'w-4 h-4') {
     return Array.from({ length: 5 }, (_, i) => (
-      <Star key={i} className={`w-4 h-4 ${i < Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+      <Star key={i} className={`${size} ${i < Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
     ))
+  }
+
+  function handleContactOwner(ownerId: string, ownerName: string, e?: React.MouseEvent) {
+    if (e) e.stopPropagation()
+    if (!user) {
+      setCurrentView('auth')
+      return
+    }
+    // Navigate to the user's dashboard chat tab based on their role
+    const dashboardView = user.role === 'merchant' ? 'merchant-dashboard'
+      : user.role === 'service_provider' ? 'provider-dashboard'
+      : user.role === 'admin' ? 'admin-dashboard'
+      : 'customer-dashboard'
+    
+    setContactOwner(ownerId, ownerName)
+    setCurrentView(dashboardView)
+    
+    // Set the correct chat tab
+    const store = useAppStore.getState()
+    if (user.role === 'merchant') store.setMerchantTab('chat')
+    else if (user.role === 'service_provider') store.setProviderTab('chat')
+    else if (user.role === 'customer') store.setCustomerTab('chat')
+    else if (user.role === 'admin') store.setAdminTab('chat')
   }
 
   return (
@@ -137,7 +160,7 @@ export default function HomePage() {
         </div>
         <div className="max-w-6xl mx-auto relative z-10 text-center">
           <h1 className="text-5xl md:text-7xl font-black mb-4 animate-fade-in-up">
-            🤝 DEAL
+            <span className="gold-shimmer text-6xl md:text-8xl">DEAL</span>
           </h1>
           <p className="text-xl md:text-2xl font-light mb-2 opacity-90 gold-shimmer inline-block">
             {t('appTagline', language)}
@@ -307,9 +330,9 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="h-72 bg-gray-100 rounded-xl animate-pulse" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="h-80 bg-gray-100 rounded-2xl animate-pulse" />
                 ))}
               </div>
             ) : products.length === 0 ? (
@@ -318,60 +341,86 @@ export default function HomePage() {
                 <p className="text-lg font-bold">{t('noData', language)}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {products.map(product => (
                   <Card
                     key={product.id}
                     className="deal-card group cursor-pointer"
                     onClick={() => setSelectedProduct(product)}
                   >
-                    <div className="relative aspect-square bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+                    <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
                       {product.images && product.images.length > 0 ? (
-                        <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <img src={product.images[0]} alt={product.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-4xl">📦</div>
+                        <div className="w-full h-full flex items-center justify-center text-5xl">📦</div>
                       )}
                       {product.isNew && (
-                        <Badge className="absolute top-2 right-2 bg-red-500 text-white text-xs">{t('newBadge', language)}</Badge>
+                        <Badge className="absolute top-3 right-3 bg-red-500 text-white text-xs px-2 py-0.5">{t('newBadge', language)}</Badge>
                       )}
                       {product.isOnSale && product.salePrice && (
-                        <Badge className="absolute top-2 left-2 bg-orange-500 text-white text-xs">{t('onSale', language)}</Badge>
+                        <Badge className="absolute top-3 left-3 bg-orange-500 text-white text-xs px-2 py-0.5">-{Math.round(((product.price - product.salePrice) / product.price) * 100)}%</Badge>
+                      )}
+                      {product.isFeatured && (
+                        <Badge className="absolute bottom-3 right-3 bg-yellow-500 text-white text-xs px-2 py-0.5">{t('featured', language)}</Badge>
                       )}
                     </div>
-                    <CardContent className="p-3">
-                      <h3 className="font-bold text-sm line-clamp-2 mb-1 min-h-[2.5rem]">{product.title}</h3>
-                      <div className="flex items-center gap-1 mb-1">
-                        {renderStars(product.rating || 0)}
+                    <CardContent className="p-4">
+                      {/* Category + Title */}
+                      {product.categoryName && (
+                        <Badge variant="outline" className="text-[10px] mb-1.5 border-purple-300 text-purple-600 bg-purple-50">{product.categoryName}</Badge>
+                      )}
+                      <h3 className="font-bold text-base line-clamp-2 mb-2 min-h-[2.8rem] leading-tight">{product.title}</h3>
+                      
+                      {/* Rating */}
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <div className="flex items-center gap-0.5">{renderStars(product.rating || 0, 'w-3.5 h-3.5')}</div>
+                        <span className="text-sm font-bold text-gray-600">{(product.rating || 0).toFixed(1)}</span>
                         <span className="text-xs text-gray-400">({product.reviewCount || 0})</span>
                       </div>
-                      <div className="flex items-center justify-between">
+                      
+                      {/* Price */}
+                      <div className="flex items-center justify-between mb-3">
                         <div>
                           {product.isOnSale && product.salePrice ? (
                             <div>
                               <span className="text-xs text-gray-400 line-through">{formatPrice(product.price, language)}</span>
-                              <span className="font-black text-yellow-700 text-sm block">{formatPrice(product.salePrice, language)}</span>
+                              <span className="font-black text-yellow-700 text-lg block">{formatPrice(product.salePrice, language)}</span>
                             </div>
                           ) : (
-                            <span className="font-black text-yellow-700 text-sm">{formatPrice(product.price, language)}</span>
+                            <span className="font-black text-yellow-700 text-lg">{formatPrice(product.price, language)}</span>
                           )}
                         </div>
                         <button
                           onClick={(e) => { e.stopPropagation(); addToCart(product) }}
-                          className="w-9 h-9 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg flex items-center justify-center transition shadow-md hover:shadow-lg"
+                          className="w-10 h-10 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl flex items-center justify-center transition shadow-md hover:shadow-lg"
                           title={t('addToCart', language)}
                         >
-                          <ShoppingCart className="w-4 h-4" />
+                          <ShoppingCart className="w-5 h-5" />
                         </button>
                       </div>
-                      {product.merchant?.storeName && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-gray-400 truncate">{product.merchant.storeName}</span>
-                          {product.merchant.wilaya && (
-                            <span className="text-[10px] text-purple-400 flex items-center gap-0.5 shrink-0">
-                              <MapPin className="w-2.5 h-2.5" />
-                              {product.merchant.wilaya}
-                            </span>
-                          )}
+
+                      {/* Merchant info + Contact Button */}
+                      {product.merchant && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-bold text-gray-600 truncate">{product.merchant.storeName || product.merchant.username}</span>
+                              {product.merchant.isVerified && <Award className="w-3.5 h-3.5 text-blue-500 fill-blue-500 shrink-0" />}
+                            </div>
+                            {product.merchant.wilaya && (
+                              <div className="flex items-center gap-0.5 text-[11px] text-purple-400">
+                                <MapPin className="w-2.5 h-2.5" />
+                                <span>{product.merchant.wilaya}</span>
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => handleContactOwner(product.merchantId, product.merchant?.storeName || product.merchant?.username || '', e)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white rounded-lg text-xs font-bold transition shadow-sm hover:shadow-md"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            {t('contact', language)}
+                          </button>
                         </div>
                       )}
                     </CardContent>
@@ -394,9 +443,9 @@ export default function HomePage() {
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-48 bg-gray-100 rounded-xl animate-pulse" />
+                  <div key={i} className="h-80 bg-gray-100 rounded-2xl animate-pulse" />
                 ))}
               </div>
             ) : services.length === 0 ? (
@@ -405,49 +454,81 @@ export default function HomePage() {
                 <p className="text-lg font-bold">{t('noData', language)}</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {services.map(service => (
                   <Card
                     key={service.id}
                     className="deal-card group cursor-pointer"
                     onClick={() => setSelectedService(service)}
                   >
-                    <CardContent className="p-5">
-                      <div className="flex items-start gap-4">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center text-2xl shrink-0">
+                    {/* Service Image or Icon Header */}
+                    <div className="relative aspect-[16/9] bg-gradient-to-br from-purple-100 to-purple-200 overflow-hidden">
+                      {service.images && service.images.length > 0 ? (
+                        <img src={service.images[0]} alt={service.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-5xl">
                           {service.categoryName === 'سباكة' ? '🔧' : service.categoryName === 'كهرباء' ? '⚡' : service.categoryName === 'تكييف' ? '❄️' : service.categoryName === 'نجارة' ? '🪚' : service.categoryName === 'دهان' ? '🎨' : service.categoryName === 'نقل' ? '🚚' : service.categoryName === 'تنظيف' ? '🧹' : '🛠️'}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-base mb-1">{service.title}</h3>
-                          <div className="flex items-center gap-1 mb-1">
-                            {renderStars(service.rating || 0)}
-                            <span className="text-xs text-gray-400">({service.reviewCount || 0})</span>
-                          </div>
-                          {service.provider?.isVerified && (
-                            <Badge className="bg-purple-50 text-purple-600 text-xs mb-1">
-                              <Award className="w-3 h-3 ml-1" /> {t('verified', language)}
-                            </Badge>
-                          )}
-                        </div>
+                      )}
+                      {service.provider?.isVerified && (
+                        <Badge className="absolute top-3 right-3 bg-blue-500 text-white text-xs px-2 py-0.5">
+                          <Award className="w-3 h-3 ml-1" /> {t('verified', language)}
+                        </Badge>
+                      )}
+                    </div>
+                    <CardContent className="p-4">
+                      {/* Category + Title */}
+                      {service.categoryName && (
+                        <Badge variant="outline" className="text-[10px] mb-1.5 border-purple-300 text-purple-600 bg-purple-50">{service.categoryName}</Badge>
+                      )}
+                      <h3 className="font-bold text-base mb-2 line-clamp-2 leading-tight">{service.title}</h3>
+                      
+                      {/* Rating */}
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <div className="flex items-center gap-0.5">{renderStars(service.rating || 0, 'w-3.5 h-3.5')}</div>
+                        <span className="text-sm font-bold text-gray-600">{(service.rating || 0).toFixed(1)}</span>
+                        <span className="text-xs text-gray-400">({service.reviewCount || 0})</span>
                       </div>
-                      <div className="mt-3 flex items-center justify-between border-t pt-3">
+
+                      {/* Price + Projects */}
+                      <div className="flex items-center justify-between mb-3">
                         <div>
                           <span className="text-xs text-gray-400">
                             {service.priceType === 'fixed' ? t('fixed', language) : service.priceType === 'hourly' ? t('hourly', language) : t('negotiable', language)}
                           </span>
                           {service.price ? (
-                            <span className="font-black text-purple-600 text-sm block">{formatPrice(service.price, language)}</span>
+                            <span className="font-black text-purple-600 text-lg block">{formatPrice(service.price, language)}</span>
                           ) : (
-                            <span className="font-bold text-purple-600 text-sm">{t('negotiable', language)}</span>
+                            <span className="font-bold text-purple-600 text-lg">{t('negotiable', language)}</span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-gray-400">
-                          <span>🏗️ {service.completedProjects} {t('completedProjects', language)}</span>
+                        <div className="text-center">
+                          <div className="text-lg font-black text-purple-700">{service.completedProjects}</div>
+                          <div className="text-[10px] text-gray-400 font-bold">{t('completedProjects', language)}</div>
                         </div>
-                        <button className="btn-3d btn-3d-secondary text-xs py-1.5 px-3" onClick={(e) => { e.stopPropagation(); setSelectedService(service) }}>
-                          <Calendar className="w-3 h-3" /> {t('bookNow', language)}
-                        </button>
                       </div>
+
+                      {/* Provider info + Contact Button */}
+                      {service.provider && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs font-bold text-gray-600 truncate">{service.provider.username}</span>
+                              {service.provider.isVerified && <Award className="w-3.5 h-3.5 text-blue-500 fill-blue-500 shrink-0" />}
+                            </div>
+                            {service.provider.specialty && (
+                              <div className="text-[11px] text-gray-400 truncate">{service.provider.specialty}</div>
+                            )}
+                          </div>
+                          <button
+                            onClick={(e) => handleContactOwner(service.providerId, service.provider?.username || '', e)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white rounded-lg text-xs font-bold transition shadow-sm hover:shadow-md"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            {t('contact', language)}
+                          </button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}

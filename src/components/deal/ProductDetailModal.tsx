@@ -25,12 +25,14 @@ import {
   ChevronLeft,
   ChevronRight,
   Send,
+  MessageCircle,
+  Eye,
 } from 'lucide-react'
 
 export default function ProductDetailModal() {
-  const { selectedProduct, setSelectedProduct, language, addToCart, user, setCurrentView } = useAppStore()
+  const { selectedProduct, setSelectedProduct, language, addToCart, user, setCurrentView, setContactOwner } = useAppStore()
   const [reviews, setReviews] = useState<Review[]>([])
-  const [reviewSummary, setReviewSummary] = useState({ avgRating: 0, totalReviews: 0 })
+  const [reviewSummary, setReviewSummary] = useState({ avgRating: 0, totalReviews: 0, distribution: [0, 0, 0, 0, 0] })
   const [newRating, setNewRating] = useState(0)
   const [newComment, setNewComment] = useState('')
   const [hoverRating, setHoverRating] = useState(0)
@@ -60,9 +62,26 @@ export default function ProductDetailModal() {
             reviewerAvatar: r.reviewer?.avatar || undefined,
           }))
         )
+
+        // Algorithmic aggregation like major stores
+        const allRatings = data.data.map((r: any) => r.rating)
+        const totalReviews = allRatings.length
+        const avgRating = totalReviews > 0 ? allRatings.reduce((a: number, b: number) => a + b, 0) / totalReviews : 0
+        
+        // Calculate distribution
+        const distribution = [0, 0, 0, 0, 0]
+        allRatings.forEach((r: number) => {
+          if (r >= 1 && r <= 5) distribution[r - 1]++
+        })
+
+        setReviewSummary({ avgRating, totalReviews, distribution })
       }
       if (data.summary) {
-        setReviewSummary(data.summary)
+        setReviewSummary(prev => ({
+          ...prev,
+          avgRating: data.summary.avgRating || prev.avgRating,
+          totalReviews: data.summary.totalReviews || prev.totalReviews,
+        }))
       }
     } catch (e) {
       console.error(e)
@@ -122,6 +141,29 @@ export default function ProductDetailModal() {
       setCurrentView('auth')
     }
     handleClose()
+  }
+
+  function handleContactMerchant() {
+    if (!product?.merchant) return
+    if (!user) {
+      setCurrentView('auth')
+      handleClose()
+      return
+    }
+    const dashboardView = user.role === 'merchant' ? 'merchant-dashboard'
+      : user.role === 'service_provider' ? 'provider-dashboard'
+      : user.role === 'admin' ? 'admin-dashboard'
+      : 'customer-dashboard'
+    
+    setContactOwner(product.merchantId, product.merchant?.storeName || product.merchant?.username || '')
+    setCurrentView(dashboardView)
+    handleClose()
+    
+    const store = useAppStore.getState()
+    if (user.role === 'merchant') store.setMerchantTab('chat')
+    else if (user.role === 'service_provider') store.setProviderTab('chat')
+    else if (user.role === 'customer') store.setCustomerTab('chat')
+    else if (user.role === 'admin') store.setAdminTab('chat')
   }
 
   async function handleShare() {
@@ -264,12 +306,32 @@ export default function ProductDetailModal() {
             {/* Title */}
             <h2 className="text-xl font-black mb-2 leading-tight">{product.title}</h2>
 
-            {/* Rating */}
+            {/* Rating - Algorithmic aggregation like major stores */}
             <div className="flex items-center gap-2 mb-3">
               <div className="flex items-center gap-0.5">{renderStars(displayRating)}</div>
               <span className="text-sm font-bold text-gray-600">{displayRating.toFixed(1)}</span>
               <span className="text-xs text-gray-400">({displayReviewCount} {t('reviews', language)})</span>
             </div>
+
+            {/* Rating Distribution Bar */}
+            {displayReviewCount > 0 && (
+              <div className="mb-3 p-2 bg-gray-50 rounded-lg">
+                {[5, 4, 3, 2, 1].map(star => {
+                  const count = reviewSummary.distribution[star - 1]
+                  const pct = displayReviewCount > 0 ? (count / displayReviewCount) * 100 : 0
+                  return (
+                    <div key={star} className="flex items-center gap-1.5 text-[10px]">
+                      <span className="w-3 text-gray-500 font-bold">{star}</span>
+                      <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
+                      <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-yellow-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                      <span className="w-5 text-gray-400 text-right">{count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
 
             {/* Price */}
             <div className="mb-3">
@@ -328,7 +390,7 @@ export default function ProductDetailModal() {
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3 mb-4">
+            <div className="flex gap-3 mb-3">
               <button
                 className="btn-3d btn-3d-primary flex-1"
                 onClick={handleAddToCart}
@@ -346,6 +408,15 @@ export default function ProductDetailModal() {
                 {t('buyNow', language)}
               </button>
             </div>
+
+            {/* Contact Merchant Button */}
+            <button
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-gradient-to-r from-purple-600 to-purple-800 hover:from-purple-700 hover:to-purple-900 text-white rounded-xl font-bold text-sm transition shadow-md hover:shadow-lg mb-3"
+              onClick={handleContactMerchant}
+            >
+              <MessageCircle className="w-5 h-5" />
+              {language === 'ar' ? `تواصل مع ${product.merchant?.storeName || product.merchant?.username || 'التاجر'}` : `Contacter ${product.merchant?.storeName || product.merchant?.username || 'le vendeur'}`}
+            </button>
 
             {/* Share & Location */}
             <div className="flex items-center gap-4 mb-4">
