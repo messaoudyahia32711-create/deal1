@@ -20,6 +20,7 @@ import {
   Sparkles,
   Moon,
   Sun,
+  Truck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -49,6 +50,8 @@ function getDashboardView(role: UserRole) {
       return 'merchant-dashboard' as const
     case 'service_provider':
       return 'provider-dashboard' as const
+    case 'rental_provider':
+      return 'rental-dashboard' as const
     case 'customer':
       return 'customer-dashboard' as const
   }
@@ -62,6 +65,8 @@ function getDashboardLabel(role: UserRole, language: 'ar' | 'fr') {
       return t('merchantPanel', language)
     case 'service_provider':
       return t('providerPanel', language)
+    case 'rental_provider':
+      return t('rentalPanel', language)
     case 'customer':
       return t('customerPanel', language)
   }
@@ -123,7 +128,7 @@ export default function Header() {
     }
   }, [isDimmed])
 
-  const handleNavClick = (view: 'home' | 'auth', filter?: 'all' | 'products' | 'services') => {
+  const handleNavClick = (view: 'home' | 'auth', filter?: 'all' | 'products' | 'services' | 'rentals') => {
     setCurrentView(view)
     if (filter) setFilterType(filter)
     setMobileOpen(false)
@@ -184,6 +189,13 @@ export default function Header() {
       icon: Wrench,
       onClick: () => handleNavClick('home', 'services'),
       filterKey: 'services' as const,
+    },
+    {
+      key: 'rentals' as const,
+      label: t('rentals', language),
+      icon: Truck,
+      onClick: () => handleNavClick('home', 'rentals'),
+      filterKey: 'rentals' as const,
     },
   ]
 

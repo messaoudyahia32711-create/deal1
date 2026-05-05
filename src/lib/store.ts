@@ -2,13 +2,14 @@ import { create } from 'zustand'
 import type { Language } from './i18n'
 
 // Types
-export type UserRole = 'admin' | 'merchant' | 'service_provider' | 'customer'
-export type AppView = 'home' | 'auth' | 'merchant-dashboard' | 'provider-dashboard' | 'customer-dashboard' | 'admin-dashboard'
+export type UserRole = 'admin' | 'merchant' | 'service_provider' | 'rental_provider' | 'customer'
+export type AppView = 'home' | 'auth' | 'merchant-dashboard' | 'provider-dashboard' | 'rental-dashboard' | 'customer-dashboard' | 'admin-dashboard'
 export type AuthMode = 'login' | 'register'
 export type MerchantTab = 'overview' | 'products' | 'orders' | 'wallet' | 'reviews' | 'chat'
 export type ProviderTab = 'overview' | 'services' | 'bookings' | 'wallet' | 'reviews' | 'chat'
 export type CustomerTab = 'overview' | 'cart' | 'orders' | 'favorites' | 'chat' | 'reviews'
 export type AdminTab = 'overview' | 'users' | 'commissions' | 'categories' | 'complaints' | 'settings' | 'chat'
+export type RentalProviderTab = 'overview' | 'rentals' | 'bookings' | 'wallet' | 'reviews' | 'chat'
 export type OrderStatus = 'new' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
 export type ServiceRequestStatus = 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
 
@@ -68,6 +69,53 @@ export interface Service {
   categoryName?: string
   rating?: number
   reviewCount?: number
+}
+
+export interface Rental {
+  id: string
+  providerId: string
+  categoryId: string
+  title: string
+  description?: string
+  dailyRate: number
+  weeklyRate?: number
+  monthlyRate?: number
+  deposit: number
+  minRentalDays: number
+  maxRentalDays?: number
+  availabilityDays: string[]
+  images: string[]
+  status: string
+  views: number
+  completedRentals: number
+  coverageWilayas: string[]
+  deliveryAvailable: boolean
+  deliveryFee?: number
+  provider?: User
+  categoryName?: string
+  rating?: number
+  reviewCount?: number
+}
+
+export interface RentalRequest {
+  id: string
+  customerId: string
+  providerId: string
+  rentalId: string
+  startDate: string
+  endDate: string
+  totalDays: number
+  totalPrice: number
+  depositAmount: number
+  commissionAmount: number
+  status: string
+  deliveryAddress?: string
+  withDelivery: boolean
+  notes?: string
+  createdAt: string
+  providerName?: string
+  customerName?: string
+  rentalTitle?: string
 }
 
 export interface CartItem {
@@ -197,14 +245,16 @@ interface AppStore {
   setCustomerTab: (tab: CustomerTab) => void
   adminTab: AdminTab
   setAdminTab: (tab: AdminTab) => void
+  rentalProviderTab: RentalProviderTab
+  setRentalProviderTab: (tab: RentalProviderTab) => void
   
   // Home filters
   searchQuery: string
   setSearchQuery: (q: string) => void
   selectedCategory: string
   setSelectedCategory: (c: string) => void
-  filterType: 'all' | 'products' | 'services'
-  setFilterType: (t: 'all' | 'products' | 'services') => void
+  filterType: 'all' | 'products' | 'services' | 'rentals'
+  setFilterType: (t: 'all' | 'products' | 'services' | 'rentals') => void
   priceRange: [number, number]
   setPriceRange: (r: [number, number]) => void
   selectedWilaya: string
@@ -217,6 +267,8 @@ interface AppStore {
   setSelectedProduct: (p: Product | null) => void
   selectedService: Service | null
   setSelectedService: (s: Service | null) => void
+  selectedRental: Rental | null
+  setSelectedRental: (r: Rental | null) => void
   
   // Cart
   cart: CartItem[]
@@ -273,6 +325,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setCustomerTab: (tab) => set({ customerTab: tab }),
   adminTab: 'overview',
   setAdminTab: (tab) => set({ adminTab: tab }),
+  rentalProviderTab: 'overview' as RentalProviderTab,
+  setRentalProviderTab: (tab) => set({ rentalProviderTab: tab }),
   
   // Home filters
   searchQuery: '',
@@ -293,6 +347,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setSelectedProduct: (p) => set({ selectedProduct: p }),
   selectedService: null,
   setSelectedService: (s) => set({ selectedService: s }),
+  selectedRental: null,
+  setSelectedRental: (r) => set({ selectedRental: r }),
   
   // Cart
   cart: [],

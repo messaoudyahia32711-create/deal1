@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAppStore, type UserRole, WILAYAS, WILAYAS_FR } from '@/lib/store'
 import { t } from '@/lib/i18n'
-import { Eye, EyeOff, User, Store, Wrench, Phone, MapPin, FileText, Award, Globe } from 'lucide-react'
+import { Eye, EyeOff, User, Store, Wrench, Phone, MapPin, FileText, Award, Globe, Truck } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -55,6 +55,7 @@ export default function AuthPage() {
         if (role === 'admin') setCurrentView('admin-dashboard')
         else if (role === 'merchant') setCurrentView('merchant-dashboard')
         else if (role === 'service_provider') setCurrentView('provider-dashboard')
+        else if (role === 'rental_provider') setCurrentView('rental-dashboard')
         else setCurrentView('customer-dashboard')
       }
     } catch {
@@ -85,6 +86,11 @@ export default function AuthPage() {
         body.specialty = regSpecialty
         body.experience = parseInt(regExperience)
       }
+      if (selectedRole === 'rental_provider') {
+        body.storeName = regStoreName
+        body.specialty = regSpecialty
+        body.experience = parseInt(regExperience)
+      }
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -98,6 +104,7 @@ export default function AuthPage() {
         const role = data.data.role
         if (role === 'merchant') setCurrentView('merchant-dashboard')
         else if (role === 'service_provider') setCurrentView('provider-dashboard')
+        else if (role === 'rental_provider') setCurrentView('rental-dashboard')
         else setCurrentView('customer-dashboard')
       }
     } catch {
@@ -249,6 +256,13 @@ export default function AuthPage() {
                   >
                     👤 {t('customer', language)}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => { setLoginEmail('hassan@deal.dz'); setLoginPassword('demo123') }}
+                    className="text-xs bg-emerald-50 hover:bg-emerald-100 p-2.5 rounded-xl font-bold border border-emerald-200 transition-all hover:shadow-md text-emerald-800"
+                  >
+                    🏗️ {t('rentalProvider', language)}
+                  </button>
                 </div>
               </div>
             </form>
@@ -262,11 +276,12 @@ export default function AuthPage() {
                 <Label className="font-bold mb-2 block">
                   {language === 'ar' ? 'نوع الحساب' : 'Type de compte'}
                 </Label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   {[
                     { role: 'customer' as UserRole, icon: <User className="w-5 h-5" />, label: t('customer', language) },
                     { role: 'merchant' as UserRole, icon: <Store className="w-5 h-5" />, label: t('merchant', language) },
                     { role: 'service_provider' as UserRole, icon: <Wrench className="w-5 h-5" />, label: t('serviceProvider', language) },
+                    { role: 'rental_provider' as UserRole, icon: <Truck className="w-5 h-5" />, label: t('rentalProvider', language) },
                   ].map(({ role, icon, label }) => (
                     <button
                       key={role}
@@ -402,6 +417,49 @@ export default function AuthPage() {
                       value={regSpecialty}
                       onChange={e => setRegSpecialty(e.target.value)}
                       placeholder={language === 'ar' ? 'مثال: سباكة، كهرباء...' : 'Ex: plomberie, électricité...'}
+                      className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-bold mb-1 block">{t('experience', language)}</Label>
+                    <Input
+                      type="number"
+                      value={regExperience}
+                      onChange={e => setRegExperience(e.target.value)}
+                      min="0"
+                      className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
+                      dir="ltr"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Rental Provider extra fields */}
+              {selectedRole === 'rental_provider' && (
+                <>
+                  <div>
+                    <Label className="font-bold mb-1 block">
+                      <Store className="w-3 h-3 inline mx-1" />
+                      {language === 'ar' ? 'اسم المؤسسة' : 'Nom de l\'établissement'}
+                    </Label>
+                    <Input
+                      value={regStoreName}
+                      onChange={e => setRegStoreName(e.target.value)}
+                      placeholder={language === 'ar' ? 'اسم المؤسسة' : 'Nom de l\'établissement'}
+                      className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-bold mb-1 block">
+                      <Award className="w-3 h-3 inline mx-1" />
+                      {language === 'ar' ? 'تخصص المعدات' : 'Spécialité équipements'}
+                    </Label>
+                    <Input
+                      value={regSpecialty}
+                      onChange={e => setRegSpecialty(e.target.value)}
+                      placeholder={language === 'ar' ? 'مثال: معدات بناء، رافعات...' : 'Ex: matériel de construction, grues...'}
                       className={`${language === 'ar' ? 'text-right' : 'text-left'} h-11 rounded-xl focus:ring-amber-400 focus:border-amber-400`}
                       required
                     />

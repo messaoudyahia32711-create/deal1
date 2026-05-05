@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useAppStore, type Product, type Service, type Category, WILAYAS, WILAYAS_FR } from '@/lib/store'
+import { useAppStore, type Product, type Service, type Rental, type Category, WILAYAS, WILAYAS_FR } from '@/lib/store'
 import { t, formatPrice } from '@/lib/i18n'
-import { Search, SlidersHorizontal, MapPin, Star, ShoppingCart, Calendar, ChevronLeft, ChevronRight, Package, Wrench, TrendingUp, Users, Award, Zap, Globe, MessageCircle, Eye, Heart, Share2, Clock, Briefcase, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Search, SlidersHorizontal, MapPin, Star, ShoppingCart, Calendar, ChevronLeft, ChevronRight, Package, Wrench, TrendingUp, Users, Award, Zap, Globe, MessageCircle, Eye, Heart, Share2, Clock, Briefcase, CheckCircle, AlertTriangle, Tractor, Truck } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider'
 import ProductDetailModal from '@/components/deal/ProductDetailModal'
 import ServiceDetailModal from '@/components/deal/ServiceDetailModal'
+import RentalDetailModal from '@/components/deal/RentalDetailModal'
 
 // Animated counter hook
 function useAnimatedCounter(end: number, duration: number = 1500) {
@@ -404,6 +405,126 @@ function ServiceCard({ service, language, onSelect, onContact }: {
   )
 }
 
+// Rental Card
+function RentalCard({ rental, language, onSelect, onContact }: {
+  rental: Rental
+  language: 'ar' | 'fr'
+  onSelect: () => void
+  onContact: (e: React.MouseEvent) => void
+}) {
+  const hasImage = rental.images && rental.images.length > 0
+
+  function getRentalEmoji(cat?: string): string {
+    if (!cat) return '🏗️'
+    const map: Record<string, string> = {
+      'معدات بناء ثقيلة': '🏗️', 'معدات بناء خفيفة': '🔨', 'سقالات ودعامات': '🪜', 'خلاطة خرسانة': '⚙️',
+      'رافعات وشاحنات': '🚛', 'معدات حفر': '⛏️', 'ضواغط هواء': '💨', 'مولدات كهربائية': '⚡',
+      'معدات زراعية': '🚜', 'معدات تنظيف صناعية': '🧹', 'معدات تصوير وأحداث': '🎬', 'معدات تنقل': '🚗',
+      'Engins de chantier': '🏗️', 'Outillage de chantier': '🔨', 'Échafaudages': '🪜', 'Bétonnières': '⚙️',
+      'Grues et camions': '🚛', 'Équipements de forage': '⛏️', 'Compresseurs': '💨', 'Groupes électrogènes': '⚡',
+      'Équipements agricoles': '🚜', 'Matériel de nettoyage': '🧹', 'Matériel de tournage': '🎬', 'Véhicules de location': '🚗',
+    }
+    return map[cat] || '🏗️'
+  }
+
+  return (
+    <Card className="deal-card group cursor-pointer overflow-hidden" onClick={onSelect}>
+      <div className="relative aspect-[16/10] bg-gradient-to-br from-emerald-50 to-teal-100 overflow-hidden">
+        {hasImage ? (
+          <img src={rental.images[0]} alt={rental.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-emerald-100 to-teal-200">
+            <span className="text-5xl">{getRentalEmoji(rental.categoryName)}</span>
+            <span className="text-sm text-emerald-400 font-bold">{rental.categoryName || (language === 'ar' ? 'كراء' : 'Location')}</span>
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-10">
+          {rental.deliveryAvailable && (
+            <Badge className="bg-emerald-500 text-white text-xs px-2.5 py-1 font-bold shadow-lg">🚚 {language === 'ar' ? 'توصيل' : 'Livraison'}</Badge>
+          )}
+          {rental.provider?.isVerified && (
+            <Badge className="bg-blue-500 text-white text-xs px-2.5 py-1 font-bold shadow-lg"><Award className="w-3 h-3 ml-1" /> {t('verified', language)}</Badge>
+          )}
+        </div>
+        <div className="absolute bottom-3 right-3 z-10">
+          <div className="bg-white/95 backdrop-blur-sm rounded-xl px-3 py-1.5 shadow-lg">
+            <span className="font-black text-emerald-700 text-lg">{formatPrice(rental.dailyRate, language)}</span>
+            <span className="text-xs text-emerald-500 font-bold">{language === 'ar' ? '/يوم' : '/jour'}</span>
+          </div>
+        </div>
+      </div>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-2">
+          {rental.categoryName && (
+            <Badge variant="outline" className="text-xs border-emerald-300 text-emerald-600 bg-emerald-50 px-2 py-0.5">{rental.categoryName}</Badge>
+          )}
+          <Badge className="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5">
+            {language === 'ar' ? `الحد الأدنى ${rental.minRentalDays} يوم` : `Min ${rental.minRentalDays} jour(s)`}
+          </Badge>
+        </div>
+        <h3 className="font-black text-lg mb-2 line-clamp-2 leading-snug min-h-[3.2rem]">{rental.title}</h3>
+        {rental.description && <p className="text-sm text-gray-500 line-clamp-2 mb-3 leading-relaxed">{rental.description}</p>}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-0.5">
+            {Array.from({ length: 5 }, (_, i) => (
+              <Star key={i} className={`w-4 h-4 ${i < Math.round(rental.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
+            ))}
+          </div>
+          <span className="text-sm font-bold text-gray-700">{(rental.rating || 0).toFixed(1)}</span>
+          <span className="text-xs text-gray-400">({rental.reviewCount || 0})</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="bg-emerald-50 rounded-xl p-2 text-center border border-emerald-100">
+            <div className="font-black text-sm text-emerald-700">{formatPrice(rental.dailyRate, language)}</div>
+            <div className="text-[10px] text-emerald-500 font-bold">{language === 'ar' ? 'يومي' : 'Jour'}</div>
+          </div>
+          <div className="bg-teal-50 rounded-xl p-2 text-center border border-teal-100">
+            <div className="font-black text-sm text-teal-700">{rental.weeklyRate ? formatPrice(rental.weeklyRate, language) : '—'}</div>
+            <div className="text-[10px] text-teal-500 font-bold">{language === 'ar' ? 'أسبوعي' : 'Sem.'}</div>
+          </div>
+          <div className="bg-cyan-50 rounded-xl p-2 text-center border border-cyan-100">
+            <div className="font-black text-sm text-cyan-700">{rental.monthlyRate ? formatPrice(rental.monthlyRate, language) : '—'}</div>
+            <div className="text-[10px] text-cyan-500 font-bold">{language === 'ar' ? 'شهري' : 'Mois'}</div>
+          </div>
+        </div>
+        <div className="flex items-center justify-between mb-3 text-xs">
+          <span className="text-gray-500">💰 {language === 'ar' ? 'الضمان:' : 'Caution:'} <span className="font-bold text-amber-600">{formatPrice(rental.deposit, language)}</span></span>
+          <span className="text-gray-500">✅ {rental.completedRentals} {language === 'ar' ? 'إيجار' : 'locations'}</span>
+        </div>
+        {rental.coverageWilayas && rental.coverageWilayas.length > 0 && (
+          <div className="mb-3">
+            <div className="flex items-center gap-1 text-xs text-gray-400 mb-1"><MapPin className="w-3 h-3" /><span>{t('coverageWilayas', language)}</span></div>
+            <div className="flex flex-wrap gap-1">
+              {rental.coverageWilayas.slice(0, 3).map((w, i) => (
+                <Badge key={i} variant="outline" className="text-[10px] border-emerald-200 text-emerald-600 bg-emerald-50 px-1.5 py-0">{w}</Badge>
+              ))}
+              {rental.coverageWilayas.length > 3 && <Badge variant="outline" className="text-[10px] border-gray-200 text-gray-500 bg-gray-50 px-1.5 py-0">+{rental.coverageWilayas.length - 3}</Badge>}
+            </div>
+          </div>
+        )}
+        {rental.provider && (
+          <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="w-9 h-9 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">{rental.provider.storeName?.[0] || rental.provider.username?.[0] || 'م'}</div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1">
+                  <span className="text-sm font-bold text-gray-700 truncate">{rental.provider.storeName || rental.provider.username}</span>
+                  {rental.provider.isVerified && <Award className="w-3.5 h-3.5 text-blue-500 fill-blue-500 shrink-0" />}
+                </div>
+                {rental.provider.wilaya && <div className="flex items-center gap-0.5 text-xs text-gray-400"><MapPin className="w-3 h-3" /><span>{rental.provider.wilaya}</span></div>}
+              </div>
+            </div>
+            <button onClick={onContact} className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg">
+              <MessageCircle className="w-4 h-4" />{t('contact', language)}
+            </button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 export default function HomePage() {
   const {
     searchQuery, setSearchQuery,
@@ -413,34 +534,39 @@ export default function HomePage() {
     selectedWilaya, setSelectedWilaya,
     sortBy, setSortBy,
     addToCart, user, setCurrentView,
-    setSelectedProduct, setSelectedService,
+    setSelectedProduct, setSelectedService, setSelectedRental,
     language, setContactOwner,
   } = useAppStore()
 
   const [products, setProducts] = useState<Product[]>([])
   const [services, setServices] = useState<Service[]>([])
+  const [rentals, setRentals] = useState<Rental[]>([])
   const [categories, setCategories] = useState<Category[]>([])
-  const [stats, setStats] = useState({ merchants: 0, services: 0, deals: 0, products: 0, users: 0, wilayas: 58 })
+  const [stats, setStats] = useState({ merchants: 0, services: 0, deals: 0, products: 0, rentals: 0, users: 0, wilayas: 58 })
   const [loading, setLoading] = useState(true)
   const [productPage, setProductPage] = useState(1)
   const [servicePage, setServicePage] = useState(1)
+  const [rentalPage, setRentalPage] = useState(1)
 
   async function loadData() {
     setLoading(true)
     try {
-      const [prodRes, servRes, catRes, statsRes] = await Promise.all([
+      const [prodRes, servRes, rentRes, catRes, statsRes] = await Promise.all([
         fetch(`/api/products?search=${searchQuery}&categoryId=${selectedCategory !== 'all' ? selectedCategory : ''}&minPrice=${priceRange[0]}&maxPrice=${priceRange[1]}&wilaya=${selectedWilaya}&sortBy=${sortBy}&page=${productPage}&limit=12`),
         fetch(`/api/services?search=${searchQuery}&categoryId=${selectedCategory !== 'all' ? selectedCategory : ''}&minPrice=${priceRange[0]}&maxPrice=${priceRange[1]}&wilaya=${selectedWilaya}&sortBy=${sortBy}&page=${servicePage}&limit=12`),
+        fetch(`/api/rentals?search=${searchQuery}&categoryId=${selectedCategory !== 'all' ? selectedCategory : ''}&minPrice=${priceRange[0]}&maxPrice=${priceRange[1]}&wilaya=${selectedWilaya}&sortBy=${sortBy}&page=${rentalPage}&limit=12`),
         fetch('/api/categories'),
         fetch('/api/stats'),
       ])
       const prodData = await prodRes.json()
       const servData = await servRes.json()
+      const rentData = await rentRes.json()
       const catData = await catRes.json()
       const statsData = await statsRes.json()
 
       setProducts(prodData.data || [])
       setServices(servData.data || [])
+      setRentals(rentData.data || [])
       setCategories(catData.data || [])
       if (statsData.data) {
         setStats({
@@ -448,6 +574,7 @@ export default function HomePage() {
           services: statsData.data.services?.active || 0,
           deals: statsData.data.orders?.total || 0,
           products: statsData.data.products?.active || 0,
+          rentals: statsData.data.rentals?.active || 0,
           users: statsData.data.users?.total || 0,
           wilayas: 58,
         })
@@ -460,10 +587,11 @@ export default function HomePage() {
 
   useEffect(() => {
     loadData()
-  }, [searchQuery, selectedCategory, filterType, priceRange, selectedWilaya, sortBy, productPage, servicePage])
+  }, [searchQuery, selectedCategory, filterType, priceRange, selectedWilaya, sortBy, productPage, servicePage, rentalPage])
 
   const productCategories = categories.filter(c => c.type === 'product')
   const serviceCategories = categories.filter(c => c.type === 'service')
+  const rentalCategories = categories.filter(c => c.type === 'rental')
 
   function handleContactOwner(ownerId: string, ownerName: string, e?: React.MouseEvent) {
     if (e) e.stopPropagation()
@@ -473,6 +601,7 @@ export default function HomePage() {
     }
     const dashboardView = user.role === 'merchant' ? 'merchant-dashboard'
       : user.role === 'service_provider' ? 'provider-dashboard'
+      : user.role === 'rental_provider' ? 'rental-dashboard'
       : user.role === 'admin' ? 'admin-dashboard'
       : 'customer-dashboard'
     
@@ -482,6 +611,7 @@ export default function HomePage() {
     const store = useAppStore.getState()
     if (user.role === 'merchant') store.setMerchantTab('chat')
     else if (user.role === 'service_provider') store.setProviderTab('chat')
+    else if (user.role === 'rental_provider') store.setRentalProviderTab('chat')
     else if (user.role === 'customer') store.setCustomerTab('chat')
     else if (user.role === 'admin') store.setAdminTab('chat')
   }
@@ -510,6 +640,7 @@ export default function HomePage() {
             <StatCounter value={stats.products} label={t('products', language)} icon={<Package className="w-5 h-5 text-yellow-300" />} delay={200} />
             <StatCounter value={stats.services} label={t('services', language)} icon={<Wrench className="w-5 h-5 text-yellow-300" />} delay={300} />
             <StatCounter value={stats.deals} label={t('dealsCompleted', language)} icon={<Zap className="w-5 h-5 text-yellow-300" />} delay={400} />
+            <StatCounter value={stats.rentals} label={t('rentals', language)} icon={<Tractor className="w-5 h-5 text-yellow-300" />} delay={500} />
           </div>
 
           {/* CTA Buttons */}
@@ -519,6 +650,9 @@ export default function HomePage() {
             </button>
             <button className="btn-3d btn-3d-secondary text-lg" onClick={() => { if (!user) { setCurrentView('auth') } else { setCurrentView('merchant-dashboard') } }}>
               <TrendingUp className="w-5 h-5" /> {t('registerAsMerchant', language)}
+            </button>
+            <button className="btn-3d text-lg" onClick={() => { setFilterType('rentals'); document.getElementById('rentals-section')?.scrollIntoView({ behavior: 'smooth' }) }} style={{background: 'linear-gradient(135deg, #059669, #0d9488)', color: 'white'}}>
+              <Tractor className="w-5 h-5" /> {t('rentals', language)}
             </button>
           </div>
         </div>
@@ -565,13 +699,16 @@ export default function HomePage() {
               <button onClick={() => setFilterType('services')} className={`px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-1 ${filterType === 'services' ? 'bg-purple-500 text-white shadow-md' : 'hover:bg-gray-200'}`}>
                 <Wrench className="w-4 h-4" /> {t('services', language)}
               </button>
+              <button onClick={() => setFilterType('rentals')} className={`px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-1 ${filterType === 'rentals' ? 'bg-emerald-500 text-white shadow-md' : 'hover:bg-gray-200'}`}>
+                <Tractor className="w-4 h-4" /> {t('rentals', language)}
+              </button>
             </div>
 
             <div className="flex gap-2 overflow-x-auto pb-1 flex-1">
               <button onClick={() => setSelectedCategory('all')} className={`whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-bold border-2 transition ${selectedCategory === 'all' ? 'border-yellow-500 bg-yellow-50 text-yellow-700' : 'border-gray-200 hover:border-yellow-300'}`}>
                 {t('all', language)}
               </button>
-              {(filterType === 'services' ? serviceCategories : productCategories).map(cat => (
+              {(filterType === 'rentals' ? rentalCategories : filterType === 'services' ? serviceCategories : productCategories).map(cat => (
                 <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className={`whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-bold border-2 transition ${selectedCategory === cat.id ? 'border-yellow-500 bg-yellow-50 text-yellow-700' : 'border-gray-200 hover:border-yellow-300'}`}>
                   {cat.icon} {language === 'ar' ? cat.nameAr : (cat.nameFr || cat.nameAr)}
                 </button>
@@ -686,11 +823,53 @@ export default function HomePage() {
             )}
           </section>
         )}
+
+        {/* Rentals Section */}
+        {(filterType === 'all' || filterType === 'rentals') && (
+          <section id="rentals-section" className="mb-16">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <Tractor className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black">{t('rentals', language)}</h2>
+                <p className="text-sm text-gray-400">{language === 'ar' ? 'كراء المعدات والآلات في الجزائر' : "Location d'équipements en Algérie"}</p>
+              </div>
+              <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 text-sm px-3 py-1">{rentals.length}</Badge>
+            </div>
+
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-[500px] bg-gray-100 rounded-2xl animate-pulse" />
+                ))}
+              </div>
+            ) : rentals.length === 0 ? (
+              <div className="text-center py-20 text-gray-400">
+                <Tractor className="w-20 h-20 mx-auto mb-4 opacity-30" />
+                <p className="text-xl font-bold">{t('noData', language)}</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {rentals.map(rental => (
+                  <RentalCard
+                    key={rental.id}
+                    rental={rental}
+                    language={language}
+                    onSelect={() => setSelectedRental(rental)}
+                    onContact={(e) => handleContactOwner(rental.providerId, rental.provider?.storeName || rental.provider?.username || '', e)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </div>
 
       {/* Detail Modals */}
       <ProductDetailModal />
       <ServiceDetailModal />
+      <RentalDetailModal />
     </div>
   )
 }

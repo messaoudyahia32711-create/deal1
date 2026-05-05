@@ -19,6 +19,8 @@ async function main() {
   await prisma.orderItem.deleteMany()
   await prisma.order.deleteMany()
   await prisma.serviceRequest.deleteMany()
+  await prisma.rentalRequest.deleteMany()
+  await prisma.rental.deleteMany()
   await prisma.merchantWallet.deleteMany()
   await prisma.product.deleteMany()
   await prisma.service.deleteMany()
@@ -76,17 +78,35 @@ async function main() {
     { nameAr: 'عطارة وطب شعبي', nameFr: 'Herboristerie et médecine traditionnelle', icon: '🫖', type: 'service' },
   ]
 
+  const rentalCategoriesData = [
+    { nameAr: 'معدات بناء ثقيلة', nameFr: 'Engins de chantier', icon: '🏗️', type: 'rental' },
+    { nameAr: 'معدات بناء خفيفة', nameFr: 'Outillage de chantier', icon: '🔨', type: 'rental' },
+    { nameAr: 'سقالات ودعامات', nameFr: 'Échafaudages et étaiements', icon: '🪜', type: 'rental' },
+    { nameAr: 'خلاطة خرسانة', nameFr: 'Bétonnières', icon: '⚙️', type: 'rental' },
+    { nameAr: 'رافعات وشاحنات', nameFr: 'Grues et camions', icon: '🚛', type: 'rental' },
+    { nameAr: 'معدات حفر', nameFr: 'Équipements de forage', icon: '⛏️', type: 'rental' },
+    { nameAr: 'ضواغط هواء', nameFr: 'Compresseurs d\'air', icon: '💨', type: 'rental' },
+    { nameAr: 'مولدات كهربائية', nameFr: 'Groupes électrogènes', icon: '⚡', type: 'rental' },
+    { nameAr: 'معدات زراعية', nameFr: 'Équipements agricoles', icon: '🚜', type: 'rental' },
+    { nameAr: 'معدات تنظيف صناعية', nameFr: 'Matériel de nettoyage industriel', icon: '🧹', type: 'rental' },
+    { nameAr: 'معدات تصوير وأحداث', nameFr: 'Matériel de tournage et événementiel', icon: '🎬', type: 'rental' },
+    { nameAr: 'معدات تنقل', nameFr: 'Véhicules de location', icon: '🚗', type: 'rental' },
+  ]
+
   const categories = await prisma.$transaction([
     ...productCategoriesData.map(data => prisma.category.create({ data })),
     ...serviceCategoriesData.map(data => prisma.category.create({ data })),
+    ...rentalCategoriesData.map(data => prisma.category.create({ data })),
   ])
 
   const productCategories = categories.slice(0, 20)
   const serviceCategories = categories.slice(20, 40)
+  const rentalCategories = categories.slice(40, 52)
 
-  console.log(`  ✅ Created ${categories.length} categories (${productCategories.length} product, ${serviceCategories.length} service)`)
+  console.log(`  ✅ Created ${categories.length} categories (${productCategories.length} product, ${serviceCategories.length} service, ${rentalCategories.length} rental)`)
   console.log(`     📦 Product categories: 8 original + 12 new Algerian artisanal categories`)
   console.log(`     🔧 Service categories: 8 original + 12 new Algerian traditional service categories`)
+  console.log(`     🏗️ Rental categories: 12 equipment rental categories`)
 
   // ─── 2. USERS ───────────────────────────────────────────────────────────────
   console.log('👥 Creating users...')
@@ -273,7 +293,43 @@ async function main() {
     }),
   ])
 
-  console.log(`  ✅ Created 1 admin, ${merchants.length} merchants, ${serviceProviders.length} service providers, ${customers.length} customers`)
+  // Rental Providers
+  const rentalProviders = await prisma.$transaction([
+    prisma.user.create({
+      data: {
+        username: 'rental_hassan',
+        email: 'hassan@deal.dz',
+        passwordHash: DEMO_PASSWORD_HASH,
+        role: 'rental_provider',
+        phone: '0550000040',
+        address: 'الحراش، الجزائر',
+        wilaya: 'الجزائر',
+        isVerified: true,
+        isActive: true,
+        storeName: 'مؤجر حسان للمعدات',
+        specialty: 'كراء معدات البناء',
+        experience: 10,
+      },
+    }),
+    prisma.user.create({
+      data: {
+        username: 'rental_said',
+        email: 'said@deal.dz',
+        passwordHash: DEMO_PASSWORD_HASH,
+        role: 'rental_provider',
+        phone: '0550000041',
+        address: 'وهران السانية',
+        wilaya: 'وهران',
+        isVerified: true,
+        isActive: true,
+        storeName: 'معدات السعيد',
+        specialty: 'كراء المعدات الثقيلة',
+        experience: 15,
+      },
+    }),
+  ])
+
+  console.log(`  ✅ Created 1 admin, ${merchants.length} merchants, ${serviceProviders.length} service providers, ${rentalProviders.length} rental providers, ${customers.length} customers`)
 
   // ─── 3. PRODUCTS ────────────────────────────────────────────────────────────
   console.log('📦 Creating products...')
@@ -360,6 +416,46 @@ async function main() {
 
   console.log(`  ✅ Created ${services.length} services`)
 
+  // ─── RENTALS ────────────────────────────────────────────────────────────
+  console.log('🏗️ Creating rentals...')
+
+  const rentalsData = [
+    // معدات بناء ثقيلة (provider: hassan)
+    { providerId: rentalProviders[0].id, categoryId: rentalCategories[0].id, title: 'حفارة كاتربيلر 320', description: 'حفارة هيدروليكية بمجرفة 1.2 م³، مثالية لأعمال الحفر والتسوية', dailyRate: 45000, weeklyRate: 250000, monthlyRate: 850000, deposit: 200000, minRentalDays: 1, maxRentalDays: 90, completedRentals: 35, views: 189, coverageWilayas: '["16","42","25"]', deliveryAvailable: true, deliveryFee: 15000 },
+    { providerId: rentalProviders[0].id, categoryId: rentalCategories[0].id, title: 'بلدوزر كوماتسو D65', description: 'بلدوزر بقوة 170 حصان، مناسب لأعمال الدفع والتسوية', dailyRate: 55000, weeklyRate: 300000, monthlyRate: 1000000, deposit: 300000, minRentalDays: 1, maxRentalDays: 60, completedRentals: 22, views: 145, coverageWilayas: '["16"]', deliveryAvailable: true, deliveryFee: 25000 },
+
+    // معدات بناء خفيفة (provider: hassan)
+    { providerId: rentalProviders[0].id, categoryId: rentalCategories[1].id, title: 'مطرقة هيدروليكية تكسير', description: 'مطرقة تكسير هيدروليكية للخرسانة والصخور، قوة 1500 ضربة/دقيقة', dailyRate: 8000, weeklyRate: 45000, monthlyRate: 150000, deposit: 50000, minRentalDays: 1, maxRentalDays: 30, completedRentals: 68, views: 312, coverageWilayas: '["16","42"]', deliveryAvailable: true, deliveryFee: 5000 },
+
+    // خلاطة خرسانة (provider: hassan)
+    { providerId: rentalProviders[0].id, categoryId: rentalCategories[3].id, title: 'خلاطة خرسانة 400 لتر', description: 'خلاطة ذاتية التحميل بسعة 400 لتر، محرك ديزل', dailyRate: 5000, weeklyRate: 28000, monthlyRate: 90000, deposit: 30000, minRentalDays: 1, maxRentalDays: 60, completedRentals: 95, views: 456, coverageWilayas: '["16","42","25"]', deliveryAvailable: true, deliveryFee: 3000 },
+
+    // سقالات (provider: hassan)
+    { providerId: rentalProviders[0].id, categoryId: rentalCategories[2].id, title: 'سقالات معدنية متعددة الطوابق', description: 'سقالات معدنية قابلة للتجميع، حتى 6 طوابق، مع ألواح ومشابك', dailyRate: 2000, weeklyRate: 10000, monthlyRate: 35000, deposit: 20000, minRentalDays: 7, maxRentalDays: 180, completedRentals: 42, views: 234, coverageWilayas: '["16"]', deliveryAvailable: true, deliveryFee: 8000 },
+
+    // مولدات كهربائية (provider: said)
+    { providerId: rentalProviders[1].id, categoryId: rentalCategories[7].id, title: 'مولد كهربائي 100 كيلوفولت', description: 'مولد ديزل بقوة 100 كيلوفولت أمبير، مثالي للمواقع والأحداث', dailyRate: 12000, weeklyRate: 65000, monthlyRate: 220000, deposit: 80000, minRentalDays: 1, maxRentalDays: 90, completedRentals: 55, views: 378, coverageWilayas: '["22","16","25"]', deliveryAvailable: true, deliveryFee: 10000 },
+    { providerId: rentalProviders[1].id, categoryId: rentalCategories[7].id, title: 'مولد كهربائي صغير 5 كيلوفولت', description: 'مولد بنزين صغير مناسب للاستخدام المنزلي والمحلات', dailyRate: 3000, weeklyRate: 16000, monthlyRate: 55000, deposit: 15000, minRentalDays: 1, maxRentalDays: 30, completedRentals: 110, views: 523, coverageWilayas: '["22","16"]', deliveryAvailable: true, deliveryFee: 2000 },
+
+    // معدات زراعية (provider: said)
+    { providerId: rentalProviders[1].id, categoryId: rentalCategories[8].id, title: 'جرار زراعي ماسsey فerguson', description: 'جرار زراعي بقوة 75 حصان مع ملحقات الحراثة', dailyRate: 15000, weeklyRate: 80000, monthlyRate: 280000, deposit: 100000, minRentalDays: 1, maxRentalDays: 90, completedRentals: 28, views: 167, coverageWilayas: '["22","16"]', deliveryAvailable: true, deliveryFee: 12000 },
+
+    // رافعات (provider: said)
+    { providerId: rentalProviders[1].id, categoryId: rentalCategories[4].id, title: 'رافعة شاحنة 15 طن', description: 'رافعة هيدروليكية مركبة على شاحنة، ذراع 21 متر', dailyRate: 35000, weeklyRate: 200000, monthlyRate: 700000, deposit: 150000, minRentalDays: 1, maxRentalDays: 60, completedRentals: 18, views: 198, coverageWilayas: '["22","16","25"]', deliveryAvailable: false },
+
+    // ضواغط هواء (provider: hassan)
+    { providerId: rentalProviders[0].id, categoryId: rentalCategories[6].id, title: 'ضاغط هواء 10 بار', description: 'ضاغط هواء بضغط 10 بار، مناسب لأعمال الرش والبناء', dailyRate: 6000, weeklyRate: 32000, monthlyRate: 110000, deposit: 40000, minRentalDays: 1, maxRentalDays: 60, completedRentals: 40, views: 210, coverageWilayas: '["16","42"]', deliveryAvailable: true, deliveryFee: 4000 },
+
+    // معدات تنقل (provider: said)
+    { providerId: rentalProviders[1].id, categoryId: rentalCategories[11].id, title: 'شاحنة نقل 10 طن', description: 'شاحنة نقل بسعة 10 طن مع سائق، لنقل البضائع والمواد', dailyRate: 18000, weeklyRate: 95000, monthlyRate: 320000, deposit: 80000, minRentalDays: 1, maxRentalDays: 30, completedRentals: 65, views: 289, coverageWilayas: '["22","16","25"]', deliveryAvailable: false },
+  ]
+
+  const rentals = await prisma.$transaction(
+    rentalsData.map(data => prisma.rental.create({ data }))
+  )
+
+  console.log(`  ✅ Created ${rentals.length} rentals`)
+
   // ─── 5. MERCHANT WALLETS ────────────────────────────────────────────────────
   console.log('💰 Creating merchant wallets...')
 
@@ -381,6 +477,12 @@ async function main() {
     }),
     prisma.merchantWallet.create({
       data: { merchantId: serviceProviders[2].id, balance: 38000, totalEarned: 150000, totalCommissionPaid: 7500, pendingWithdrawal: 0 },
+    }),
+    prisma.merchantWallet.create({
+      data: { merchantId: rentalProviders[0].id, balance: 120000, totalEarned: 520000, totalCommissionPaid: 26000, pendingWithdrawal: 20000 },
+    }),
+    prisma.merchantWallet.create({
+      data: { merchantId: rentalProviders[1].id, balance: 95000, totalEarned: 410000, totalCommissionPaid: 20500, pendingWithdrawal: 12000 },
     }),
   ])
 
@@ -576,9 +678,10 @@ async function main() {
   console.log('🎉 DEAL Platform seed completed successfully!')
   console.log('═'.repeat(50))
   console.log(`  📂 Categories:    ${categories.length}`)
-  console.log(`  👤 Users:         ${1 + merchants.length + serviceProviders.length + customers.length}`)
+  console.log(`  👤 Users:         ${1 + merchants.length + serviceProviders.length + rentalProviders.length + customers.length}`)
   console.log(`  📦 Products:      ${products.length}`)
   console.log(`  🔧 Services:      ${services.length}`)
+  console.log(`  🏗️ Rentals:       ${rentals.length}`)
   console.log(`  💰 Wallets:       ${wallets.length}`)
   console.log(`  🛒 Orders:        7`)
   console.log(`  ⭐ Reviews:       ${reviews.length}`)

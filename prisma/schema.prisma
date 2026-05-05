@@ -15,7 +15,7 @@ model User {
   username     String   @unique
   email        String   @unique
   passwordHash String
-  role         String   @default("customer") // admin, merchant, service_provider, customer
+  role         String   @default("customer") // admin, merchant, service_provider, rental_provider, customer
   phone        String?
   address      String?
   wilaya       String?
@@ -39,6 +39,9 @@ model User {
   sentMessages     Message[]        @relation("SentMessages")
   receivedMessages Message[]        @relation("ReceivedMessages")
   notifications    Notification[]
+  rentals          Rental[]
+  providedRentals  RentalRequest[]  @relation("ProviderRentals")
+  requestedRentals RentalRequest[]  @relation("CustomerRentals")
   reviews          Review[]         @relation("ReviewerReviews")
   wallet           MerchantWallet?
 }
@@ -49,11 +52,12 @@ model Category {
   nameFr   String?
   icon     String?
   parentId String?
-  type     String    @default("product") // product, service
+  type     String    @default("product") // product, service, rental
   parent   Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children Category[] @relation("CategoryHierarchy")
   products Product[]
   services Service[]
+  rentals  Rental[]
   createdAt DateTime @default(now())
 }
 
@@ -100,6 +104,34 @@ model Service {
   provider  User             @relation(fields: [providerId], references: [id])
   category  Category         @relation(fields: [categoryId], references: [id])
   requests  ServiceRequest[]
+}
+
+model Rental {
+  id              String   @id @default(cuid())
+  providerId      String
+  categoryId      String
+  title           String
+  description     String?
+  dailyRate       Float    @default(0)
+  weeklyRate      Float?
+  monthlyRate     Float?
+  deposit         Float    @default(0) // caution/dépôt de garantie
+  minRentalDays   Int      @default(1)
+  maxRentalDays   Int?
+  availabilityDays String  @default("[]") // JSON array of available days
+  images          String   @default("[]") // JSON array of image URLs
+  status          String   @default("active") // active, hidden, suspended
+  views           Int      @default(0)
+  completedRentals Int     @default(0)
+  coverageWilayas String   @default("[]") // JSON array of wilaya codes
+  deliveryAvailable Boolean @default(false)
+  deliveryFee     Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  provider  User           @relation(fields: [providerId], references: [id])
+  category  Category       @relation(fields: [categoryId], references: [id])
+  requests  RentalRequest[]
 }
 
 model Order {
@@ -152,11 +184,34 @@ model ServiceRequest {
   service  Service @relation(fields: [serviceId], references: [id])
 }
 
+model RentalRequest {
+  id               String    @id @default(cuid())
+  customerId       String
+  providerId       String
+  rentalId         String
+  startDate        DateTime
+  endDate          DateTime
+  totalDays        Int       @default(1)
+  totalPrice       Float     @default(0)
+  depositAmount    Float     @default(0)
+  commissionAmount Float     @default(0)
+  status           String    @default("pending") // pending, confirmed, active, completed, cancelled
+  deliveryAddress  String?
+  withDelivery     Boolean   @default(false)
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  customer User    @relation("CustomerRentals", fields: [customerId], references: [id])
+  provider User    @relation("ProviderRentals", fields: [providerId], references: [id])
+  rental   Rental  @relation(fields: [rentalId], references: [id])
+}
+
 model Review {
   id         String   @id @default(cuid())
   reviewerId String
   targetId   String   // Can be productId, serviceId, merchantId, or providerId
-  targetType String   // product, service, merchant, provider
+  targetType String   // product, service, rental, merchant, provider, rental_provider
   rating     Int      @default(5) // 1-5
   comment    String?
   images     String   @default("[]") // JSON array

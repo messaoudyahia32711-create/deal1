@@ -8,6 +8,7 @@ import HomePage from '@/components/deal/HomePage'
 import AuthPage from '@/components/deal/AuthPage'
 import MerchantDashboard from '@/components/deal/MerchantDashboard'
 import ProviderDashboard from '@/components/deal/ProviderDashboard'
+import RentalProviderDashboard from '@/components/deal/RentalProviderDashboard'
 import CustomerDashboard from '@/components/deal/CustomerDashboard'
 import AdminDashboard from '@/components/deal/AdminDashboard'
 
@@ -30,6 +31,8 @@ export default function DealPlatform() {
         return <MerchantDashboard />
       case 'provider-dashboard':
         return <ProviderDashboard />
+      case 'rental-dashboard':
+        return <RentalProviderDashboard />
       case 'customer-dashboard':
         return <CustomerDashboard />
       case 'admin-dashboard':
