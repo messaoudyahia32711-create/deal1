@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import ProfileEditModal from '@/components/deal/ProfileEditModal'
 
 const statusLabels: Record<string, { ar: string; fr: string; cls: string }> = {
   pending: { ar: 'معلق 🔴', fr: 'En attente 🔴', cls: 'bg-red-500 text-white' },
@@ -30,6 +31,7 @@ export default function ProviderDashboard() {
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [loading, setLoading] = useState(true)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const [profileEditOpen, setProfileEditOpen] = useState(false)
   const [categories, setCategories] = useState<{ id: string; nameAr: string }[]>([])
   const [newSvc, setNewSvc] = useState({ title: '', description: '', priceType: 'fixed', price: '', categoryId: '', coverageWilayas: '', availabilityDays: [] as string[] })
   const [svcImages, setSvcImages] = useState<File[]>([])
@@ -46,6 +48,19 @@ export default function ProviderDashboard() {
     { key: 'thursday', ar: 'الخميس', fr: 'Jeudi' },
     { key: 'friday', ar: 'الجمعة', fr: 'Vendredi' },
   ]
+
+  async function refreshUser() {
+    if (!user?.id) return
+    try {
+      const res = await fetch(`/api/users/${user.id}`)
+      const data = await res.json()
+      if (data.data) {
+        useAppStore.getState().setUser(data.data)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   async function loadData() {
     if (!user?.id) return
@@ -196,6 +211,7 @@ export default function ProviderDashboard() {
             <TabsTrigger value="wallet" className="rounded-lg font-bold">💰 {t('wallet', language)}</TabsTrigger>
             <TabsTrigger value="reviews" className="rounded-lg font-bold">⭐ {t('reviews', language)}</TabsTrigger>
             <TabsTrigger value="chat" className="rounded-lg font-bold">💬 {t('chat', language)}</TabsTrigger>
+            <TabsTrigger value="profile" className="rounded-lg font-bold">👤 {t('editProfile', language)}</TabsTrigger>
           </TabsList>
 
           {/* Overview */}
@@ -455,6 +471,37 @@ export default function ProviderDashboard() {
             {user ? (
               <MessagePanel userId={user.id} userRole={user.role} language={language} />
             ) : null}
+          </TabsContent>
+
+          {/* Profile */}
+          <TabsContent value="profile">
+            {profileEditOpen && user && (
+              <ProfileEditModal
+                user={user}
+                language={language}
+                onClose={() => setProfileEditOpen(false)}
+                onSaved={() => { setProfileEditOpen(false); refreshUser() }}
+              />
+            )}
+            {!profileEditOpen && (
+              <Card className="shadow-sm">
+                <CardContent className="p-8 text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-black mx-auto mb-4">
+                    {user?.username?.[0] || 'م'}
+                  </div>
+                  <h3 className="text-xl font-black mb-1">{user?.username}</h3>
+                  <p className="text-gray-400 mb-1">{user?.email}</p>
+                  <p className="text-gray-400 mb-1">{user?.phone}</p>
+                  <p className="text-gray-400 mb-4">{user?.wilaya}</p>
+                  {user?.specialty && <Badge className="bg-purple-100 text-purple-700 mb-4">🔧 {user.specialty}</Badge>}
+                  <div>
+                    <button onClick={() => setProfileEditOpen(true)} className="btn-3d btn-3d-primary">
+                      ✏️ {t('editProfile', language)}
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

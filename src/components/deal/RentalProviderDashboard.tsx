@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore, type Rental, type RentalRequest, type Wallet } from '@/lib/store'
 import { t, formatPrice } from '@/lib/i18n'
 import MessagePanel from '@/components/deal/MessagePanel'
+import ProfileEditModal from '@/components/deal/ProfileEditModal'
 import { Wrench, Calendar, Star, Plus, Edit, Trash2, CheckCircle, XCircle, Clock, Image as ImageIcon, X, Loader2, Truck } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -49,31 +50,49 @@ export default function RentalProviderDashboard() {
   const [rentalImages, setRentalImages] = useState<File[]>([])
   const [rentalImagePreviews, setRentalImagePreviews] = useState<string[]>([])
   const [uploadingRental, setUploadingRental] = useState(false)
+  const [profileEditOpen, setProfileEditOpen] = useState(false)
+  const [availableRentals, setAvailableRentals] = useState<Rental[]>([])
   const isArabic = language === 'ar'
 
   async function loadData() {
     if (!user?.id) return
     setLoading(true)
     try {
-      const [rentalRes, bookRes, walletRes, catRes] = await Promise.all([
+      const [rentalRes, bookRes, walletRes, catRes, rentBrowseRes] = await Promise.all([
         fetch(`/api/rentals?providerId=${user.id}&limit=100`),
         fetch(`/api/rental-requests?providerId=${user.id}`),
         fetch(`/api/wallet?merchantId=${user.id}`),
         fetch('/api/categories?type=rental'),
+        fetch('/api/rentals?limit=6'),
       ])
       const rentalData = await rentalRes.json()
       const bookData = await bookRes.json()
       const walletData = await walletRes.json()
       const catData = await catRes.json()
+      const rentBrowseData = await rentBrowseRes.json()
 
       setRentals(rentalData.data || [])
       setBookings(bookData.data || [])
       setWallet(walletData.data || null)
       setCategories(catData.data || [])
+      setAvailableRentals(rentBrowseData.data || [])
     } catch (e) {
       console.error(e)
     }
     setLoading(false)
+  }
+
+  async function refreshUser() {
+    if (!user?.id) return
+    try {
+      const res = await fetch(`/api/users/${user.id}`)
+      const data = await res.json()
+      if (data.data) {
+        useAppStore.getState().setUser(data.data)
+      }
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   useEffect(() => {
@@ -198,6 +217,7 @@ export default function RentalProviderDashboard() {
             <TabsTrigger value="wallet" className="rounded-lg font-bold">💰 {t('wallet', language)}</TabsTrigger>
             <TabsTrigger value="reviews" className="rounded-lg font-bold">⭐ {t('reviews', language)}</TabsTrigger>
             <TabsTrigger value="chat" className="rounded-lg font-bold">💬 {t('chat', language)}</TabsTrigger>
+            <TabsTrigger value="profile" className="rounded-lg font-bold">👤 {t('editProfile', language)}</TabsTrigger>
           </TabsList>
 
           {/* Overview */}
@@ -230,6 +250,67 @@ export default function RentalProviderDashboard() {
                   <div><div className="text-sm text-gray-500 font-bold">{t('platformCommission', language)} (1.5%)</div><div className="text-xl font-black text-red-500">{formatPrice(commission, language)}</div></div>
                   <div><div className="text-sm text-gray-500 font-bold">{t('netProfit', language)}</div><div className="text-xl font-black text-emerald-600">{formatPrice(netProfit, language)}</div></div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Browse Available Rentals */}
+            <Card className="shadow-sm mt-4">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg font-black flex items-center justify-between">
+                  <span className="flex items-center gap-2">🏗️ {isArabic ? 'معدات متاحة للكراء' : 'Équipements disponibles'}</span>
+                  <button
+                    onClick={() => {
+                      useAppStore.getState().setFilterType('rentals')
+                      useAppStore.getState().setCurrentView('home')
+                    }}
+                    className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition flex items-center gap-1"
+                  >
+                    {isArabic ? 'عرض الكل' : 'Voir tout'} ←
+                  </button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {availableRentals.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {availableRentals.slice(0, 6).map(rental => {
+                      const hasImage = rental.images && rental.images.length > 0
+                      return (
+                        <Card
+                          key={rental.id}
+                          className="cursor-pointer hover:shadow-md transition overflow-hidden border-2 border-emerald-100 hover:border-emerald-300"
+                          onClick={() => {
+                            useAppStore.getState().setSelectedRental(rental)
+                            useAppStore.getState().setCurrentView('home')
+                          }}
+                        >
+                          <div className="aspect-[4/3] bg-gradient-to-br from-emerald-50 to-teal-100 overflow-hidden">
+                            {hasImage ? (
+                              <img src={rental.images[0]} alt={rental.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Wrench className="w-8 h-8 text-emerald-300" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-2.5">
+                            <h4 className="font-bold text-sm truncate">{rental.title}</h4>
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-xs font-black text-emerald-600">{formatPrice(rental.dailyRate, language)}/{isArabic ? 'يوم' : 'j'}</span>
+                              {rental.categoryName && (
+                                <Badge className="bg-emerald-50 text-emerald-700 text-[9px] px-1 py-0">{rental.categoryName}</Badge>
+                              )}
+                            </div>
+                          </div>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-400">
+                    <Wrench className="w-10 h-10 mx-auto mb-2 opacity-30" />
+                    <p className="text-sm">{isArabic ? 'لا توجد معدات متاحة حالياً' : 'Aucun équipement disponible'}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -479,6 +560,37 @@ export default function RentalProviderDashboard() {
             {user ? (
               <MessagePanel userId={user.id} userRole={user.role} language={language} />
             ) : null}
+          </TabsContent>
+
+          {/* Profile */}
+          <TabsContent value="profile">
+            {profileEditOpen && user && (
+              <ProfileEditModal
+                user={user}
+                language={language}
+                onClose={() => setProfileEditOpen(false)}
+                onSaved={() => { setProfileEditOpen(false); refreshUser() }}
+              />
+            )}
+            {!profileEditOpen && (
+              <Card className="shadow-sm">
+                <CardContent className="p-8 text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-full flex items-center justify-center text-white text-3xl font-black mx-auto mb-4">
+                    {user?.username?.[0] || 'م'}
+                  </div>
+                  <h3 className="text-xl font-black mb-1">{user?.username}</h3>
+                  <p className="text-gray-400 mb-1">{user?.email}</p>
+                  <p className="text-gray-400 mb-1">{user?.phone}</p>
+                  <p className="text-gray-400 mb-4">{user?.wilaya}</p>
+                  {user?.storeName && <Badge className="bg-emerald-100 text-emerald-700 mb-4">🏗️ {user.storeName}</Badge>}
+                  <div>
+                    <button onClick={() => setProfileEditOpen(true)} className="btn-3d py-2.5 px-6 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl font-bold text-sm transition shadow-md">
+                      ✏️ {t('editProfile', language)}
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

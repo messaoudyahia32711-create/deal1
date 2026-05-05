@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useAppStore } from '@/lib/store'
+import { useAppStore, type User } from '@/lib/store'
 import { t, formatPrice } from '@/lib/i18n'
 import MessagePanel from '@/components/deal/MessagePanel'
+import ProfileEditModal from '@/components/deal/ProfileEditModal'
 import { Users, DollarSign, Package, AlertTriangle, TrendingUp, Shield, Settings, Download, Eye, Ban, CheckCircle, Search, FileText, Bell, Plus, Pencil, Trash2, X, FolderOpen } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -94,6 +95,20 @@ export default function AdminDashboard() {
   const [catSearch, setCatSearch] = useState('')
   const [catSubmitting, setCatSubmitting] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [profileEditOpen, setProfileEditOpen] = useState(false)
+
+  async function refreshUser() {
+    if (!user?.id) return
+    try {
+      const res = await fetch(`/api/users/${user.id}`)
+      const data = await res.json()
+      if (data.data) {
+        useAppStore.getState().setUser(data.data)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -247,6 +262,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="complaints" className="rounded-lg font-bold text-xs">🚨 {t('complaints', language)}</TabsTrigger>
             <TabsTrigger value="settings" className="rounded-lg font-bold text-xs">⚙️ {t('settings', language)}</TabsTrigger>
             <TabsTrigger value="chat" className="rounded-lg font-bold text-xs">💬 {t('chat', language)}</TabsTrigger>
+            <TabsTrigger value="profile" className="rounded-lg font-bold text-xs">👤 {t('editProfile', language)}</TabsTrigger>
           </TabsList>
 
           {/* Overview */}
@@ -642,6 +658,39 @@ export default function AdminDashboard() {
             {user ? (
               <MessagePanel userId={user.id} userRole={user.role} language={language} />
             ) : null}
+          </TabsContent>
+
+          {/* Profile */}
+          <TabsContent value="profile">
+            {profileEditOpen && user && (
+              <ProfileEditModal
+                user={user as any}
+                language={language}
+                onClose={() => setProfileEditOpen(false)}
+                onSaved={() => { setProfileEditOpen(false); refreshUser() }}
+              />
+            )}
+            {!profileEditOpen && (
+              <Card className="shadow-sm">
+                <CardContent className="p-8 text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-red-400 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-black mx-auto mb-4">
+                    {user?.username?.[0] || 'م'}
+                  </div>
+                  <h3 className="text-xl font-black mb-1">{user?.username}</h3>
+                  <div className="mb-2">
+                    <Badge className="bg-red-100 text-red-700 font-bold">👑 {isArabic ? 'مدير' : 'Admin'}</Badge>
+                  </div>
+                  <p className="text-gray-400 mb-1">{user?.email}</p>
+                  <p className="text-gray-400 mb-1">{user?.phone}</p>
+                  <p className="text-gray-400 mb-4">{user?.wilaya}</p>
+                  <div>
+                    <button onClick={() => setProfileEditOpen(true)} className="btn-3d btn-3d-primary">
+                      ✏️ {t('editProfile', language)}
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

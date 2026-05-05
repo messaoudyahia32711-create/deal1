@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAppStore, type Order, type Product } from '@/lib/store'
+import { useAppStore, type Order, type Product, type User } from '@/lib/store'
 import { t, formatPrice } from '@/lib/i18n'
 import { ShoppingCart, Package, Heart, MessageCircle, Star, Plus, Minus, Trash2, CreditCard, MapPin, Truck, CheckCircle, Clock, Home } from 'lucide-react'
 import MessagePanel from '@/components/deal/MessagePanel'
+import ProfileEditModal from '@/components/deal/ProfileEditModal'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -44,6 +45,7 @@ export default function CustomerDashboard() {
   const [reviewDialogId, setReviewDialogId] = useState<string | null>(null)
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
+  const [profileEditOpen, setProfileEditOpen] = useState(false)
 
   async function loadOrders() {
     if (!user?.id) return
@@ -123,6 +125,19 @@ export default function CustomerDashboard() {
     }
   }
 
+  async function refreshUser() {
+    if (!user?.id) return
+    try {
+      const res = await fetch(`/api/users/${user.id}`)
+      const data = await res.json()
+      if (data.data) {
+        useAppStore.getState().setUser(data.data)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const cartCount = cart.reduce((s, i) => s + i.quantity, 0)
   const total = cartTotal()
 
@@ -151,6 +166,7 @@ export default function CustomerDashboard() {
             <TabsTrigger value="orders" className="rounded-lg font-bold">📦 {t('orders', language)}</TabsTrigger>
             <TabsTrigger value="favorites" className="rounded-lg font-bold">❤️ {t('favorites', language)}</TabsTrigger>
             <TabsTrigger value="chat" className="rounded-lg font-bold">💬 {t('chat', language)}</TabsTrigger>
+            <TabsTrigger value="profile" className="rounded-lg font-bold">👤 {t('editProfile', language)}</TabsTrigger>
           </TabsList>
 
           {/* Overview */}
@@ -361,6 +377,36 @@ export default function CustomerDashboard() {
                 <MessageCircle className="w-16 h-16 mx-auto text-amber-300 mb-4" />
                 <h3 className="text-xl font-bold text-gray-400">{t('noConversations', language)}</h3>
               </div>
+            )}
+          </TabsContent>
+
+          {/* Profile */}
+          <TabsContent value="profile">
+            {profileEditOpen && user && (
+              <ProfileEditModal
+                user={user}
+                language={language}
+                onClose={() => setProfileEditOpen(false)}
+                onSaved={() => { setProfileEditOpen(false); refreshUser() }}
+              />
+            )}
+            {!profileEditOpen && (
+              <Card className="shadow-sm">
+                <CardContent className="p-8 text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-violet-600 rounded-full flex items-center justify-center text-white text-3xl font-black mx-auto mb-4">
+                    {user?.username?.[0] || 'م'}
+                  </div>
+                  <h3 className="text-xl font-black mb-1">{user?.username}</h3>
+                  <p className="text-gray-400 mb-1">{user?.email}</p>
+                  <p className="text-gray-400 mb-1">{user?.phone}</p>
+                  <p className="text-gray-400 mb-4">{user?.wilaya}</p>
+                  <div>
+                    <button onClick={() => setProfileEditOpen(true)} className="btn-3d btn-3d-primary">
+                      ✏️ {t('editProfile', language)}
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
         </Tabs>

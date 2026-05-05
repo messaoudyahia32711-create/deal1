@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import ProfileEditModal from '@/components/deal/ProfileEditModal'
 
 function StatusBadge({ status, language }: { status: string; language: 'ar' | 'fr' }) {
   const statusLabels: Record<string, { ar: string; fr: string; cls: string }> = {
@@ -35,6 +36,7 @@ export default function MerchantDashboard() {
   const [stats, setStats] = useState({ todaySales: 0, newOrders: 0, rating: 0, views: 0 })
   const [loading, setLoading] = useState(true)
   const [addDialogOpen, setAddDialogOpen] = useState(false)
+  const [profileEditOpen, setProfileEditOpen] = useState(false)
   const [categories, setCategories] = useState<{ id: string; nameAr: string }[]>([])
 
   // Add product form
@@ -42,6 +44,19 @@ export default function MerchantDashboard() {
   const [prodImages, setProdImages] = useState<File[]>([])
   const [prodImagePreviews, setProdImagePreviews] = useState<string[]>([])
   const [uploadingProd, setUploadingProd] = useState(false)
+
+  async function refreshUser() {
+    if (!user?.id) return
+    try {
+      const res = await fetch(`/api/users/${user.id}`)
+      const data = await res.json()
+      if (data.data) {
+        useAppStore.getState().setUser(data.data)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   async function loadData() {
     if (!user?.id) return
@@ -188,6 +203,7 @@ export default function MerchantDashboard() {
             <TabsTrigger value="wallet" className="rounded-lg font-bold">💰 {t('wallet', language)}</TabsTrigger>
             <TabsTrigger value="reviews" className="rounded-lg font-bold">⭐ {t('reviews', language)}</TabsTrigger>
             <TabsTrigger value="chat" className="rounded-lg font-bold">💬 {t('chat', language)}</TabsTrigger>
+            <TabsTrigger value="profile" className="rounded-lg font-bold">👤 {t('editProfile', language)}</TabsTrigger>
           </TabsList>
 
           {/* Overview */}
@@ -467,6 +483,37 @@ export default function MerchantDashboard() {
             {user ? (
               <MessagePanel userId={user.id} userRole={user.role} language={language} />
             ) : null}
+          </TabsContent>
+
+          {/* Profile */}
+          <TabsContent value="profile">
+            {profileEditOpen && user && (
+              <ProfileEditModal
+                user={user}
+                language={language}
+                onClose={() => setProfileEditOpen(false)}
+                onSaved={() => { setProfileEditOpen(false); refreshUser() }}
+              />
+            )}
+            {!profileEditOpen && (
+              <Card className="shadow-sm">
+                <CardContent className="p-8 text-center">
+                  <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-full flex items-center justify-center text-white text-3xl font-black mx-auto mb-4">
+                    {user?.username?.[0] || 'م'}
+                  </div>
+                  <h3 className="text-xl font-black mb-1">{user?.username}</h3>
+                  <p className="text-gray-400 mb-1">{user?.email}</p>
+                  <p className="text-gray-400 mb-1">{user?.phone}</p>
+                  <p className="text-gray-400 mb-4">{user?.wilaya}</p>
+                  {user?.storeName && <Badge className="bg-amber-100 text-amber-700 mb-4">🏪 {user.storeName}</Badge>}
+                  <div>
+                    <button onClick={() => setProfileEditOpen(true)} className="btn-3d btn-3d-primary">
+                      ✏️ {t('editProfile', language)}
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

@@ -1,6 +1,53 @@
 import { db } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
 
+// GET /api/users/[id] - Get single user
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+
+    const user = await db.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        phone: true,
+        address: true,
+        wilaya: true,
+        isVerified: true,
+        isActive: true,
+        storeName: true,
+        regNumber: true,
+        specialty: true,
+        experience: true,
+        avatar: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'المستخدم غير موجود' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({ data: user })
+  } catch (error) {
+    console.error('User GET error:', error)
+    return NextResponse.json(
+      { error: 'حدث خطأ في تحميل المستخدم' },
+      { status: 500 }
+    )
+  }
+}
+
 // PUT /api/users/[id] - Update user
 export async function PUT(
   request: NextRequest,
@@ -34,6 +81,7 @@ export async function PUT(
       'isVerified',
       'isActive',
       'storeName',
+      'regNumber',
       'specialty',
       'experience',
       'avatar',
@@ -43,6 +91,11 @@ export async function PUT(
       if (body[field] !== undefined) {
         updateData[field] = body[field]
       }
+    }
+
+    // Handle password update separately
+    if (body.password) {
+      updateData.passwordHash = `$2a$10$demo_${body.password}`
     }
 
     const user = await db.user.update({
@@ -59,6 +112,7 @@ export async function PUT(
         isVerified: true,
         isActive: true,
         storeName: true,
+        regNumber: true,
         specialty: true,
         experience: true,
         avatar: true,

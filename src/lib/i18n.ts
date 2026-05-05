@@ -229,6 +229,20 @@ export const translations = {
     perDay: '/يوم',
     perWeek: '/أسبوع',
     perMonth: '/شهر',
+    // Profile Edit
+    editProfile: 'تعديل الملف الشخصي',
+    currentPassword: 'كلمة المرور الحالية',
+    newPassword: 'كلمة المرور الجديدة',
+    confirmPassword: 'تأكيد كلمة المرور',
+    passwordChanged: 'تم تغيير كلمة المرور',
+    profileUpdated: 'تم تحديث الملف الشخصي',
+    passwordMismatch: 'كلمات المرور غير متطابقة',
+    passwordTooShort: 'كلمة المرور قصيرة جداً (6 أحرف على الأقل)',
+    establishmentName: 'اسم المؤسسة',
+    equipmentSpecialty: 'تخصص المعدات',
+    changePassword: 'تغيير كلمة المرور',
+    personalInfo: 'المعلومات الشخصية',
+    professionalInfo: 'المعلومات المهنية',
   },
   fr: {
     // General
@@ -455,6 +469,20 @@ export const translations = {
     perDay: '/jour',
     perWeek: '/sem.',
     perMonth: '/mois',
+    // Profile Edit
+    editProfile: 'Modifier le profil',
+    currentPassword: 'Mot de passe actuel',
+    newPassword: 'Nouveau mot de passe',
+    confirmPassword: 'Confirmer le mot de passe',
+    passwordChanged: 'Mot de passe modifié',
+    profileUpdated: 'Profil mis à jour',
+    passwordMismatch: 'Les mots de passe ne correspondent pas',
+    passwordTooShort: 'Mot de passe trop court (6 caractères minimum)',
+    establishmentName: "Nom de l'établissement",
+    equipmentSpecialty: 'Spécialité équipements',
+    changePassword: 'Changer le mot de passe',
+    personalInfo: 'Informations personnelles',
+    professionalInfo: 'Informations professionnelles',
   },
 } as const
 
